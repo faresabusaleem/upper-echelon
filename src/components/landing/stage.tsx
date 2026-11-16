@@ -78,8 +78,9 @@ export function LandingStage() {
               alt={p.alt}
               fill
               sizes="(min-width: 1024px) 47vw, 100vw"
-              preload={i === 0}
-              loading={i === 0 ? undefined : "lazy"}
+              // The first plate is the LCP element: fetch it first. The rest wait until shown.
+              fetchPriority={i === 0 ? "high" : undefined}
+              loading={i === 0 ? "eager" : "lazy"}
               unoptimized={p.src.endsWith(".svg")}
               className={p.contain ? "object-contain p-[9%]" : "object-cover"}
             />
