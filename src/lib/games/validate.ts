@@ -5,6 +5,7 @@ import {
   CHIMP_MAX,
   CHIMP_START,
   REACTION_ATTEMPTS,
+  REACTION_CEILING,
   REACTION_FLOOR,
   REACTION_MIN_WAIT,
   SEQUENCE_FLASH_MS,
@@ -30,7 +31,7 @@ export type Evaluation =
 const ms = z.number().finite().min(0).max(60_000);
 
 export const detailSchemas = {
-  reaction: z.object({ times: z.array(ms.max(5000)).length(REACTION_ATTEMPTS) }),
+  reaction: z.object({ times: z.array(ms.max(REACTION_CEILING)).length(REACTION_ATTEMPTS) }),
   sequence: z.object({ level: z.number().int().min(0).max(500) }),
   aim: z.object({ times: z.array(ms.max(15_000)).length(AIM_TARGETS) }),
   number: z.object({ digits: z.number().int().min(0).max(200) }),

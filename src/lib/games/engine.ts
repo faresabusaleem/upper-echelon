@@ -31,6 +31,8 @@ export const REACTION_MIN_WAIT = 1500;
 export const REACTION_MAX_WAIT = 4500;
 /** Faster than this is not a reaction but a guess. */
 export const REACTION_FLOOR = 100;
+/** Slower than this, the player looked away: the attempt is void and taken again. */
+export const REACTION_CEILING = 5000;
 
 export function reactionDelay(rng: Rng = Math.random): number {
   return randInt(rng, REACTION_MIN_WAIT, REACTION_MAX_WAIT);

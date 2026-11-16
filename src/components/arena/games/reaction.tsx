@@ -1,12 +1,12 @@
 "use client";
 
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
-import { REACTION_ATTEMPTS, reactionDelay } from "@/lib/games/engine";
+import { REACTION_ATTEMPTS, REACTION_CEILING, reactionDelay } from "@/lib/games/engine";
 import { GameIntro, Readout, Stage } from "../game-ui";
 import { ResultPanel } from "../result-panel";
 import { type GameOutcome, useGameSession } from "../use-game-session";
 
-type Phase = "intro" | "waiting" | "go" | "shown" | "early" | "result";
+type Phase = "intro" | "waiting" | "go" | "shown" | "early" | "slow" | "result";
 
 export function ReactionGame({ isMember, compact = false }: { isMember: boolean; compact?: boolean }) {
   const { begin, finish, submitting } = useGameSession("reaction", isMember);
@@ -56,6 +56,10 @@ export function ReactionGame({ isMember, compact = false }: { isMember: boolean;
     }
     if (phase === "go") {
       const ms = Math.round(performance.now() - goAt.current);
+      if (ms > REACTION_CEILING) {
+        setPhase("slow");
+        return;
+      }
       const next = [...times, ms];
       setLast(ms);
       setTimes(next);
@@ -67,7 +71,7 @@ export function ReactionGame({ isMember, compact = false }: { isMember: boolean;
       }
       return;
     }
-    if (phase === "shown" || phase === "early") arm();
+    if (phase === "shown" || phase === "early" || phase === "slow") arm();
   }, [arm, finish, phase, times]);
 
   const onKey = (e: React.KeyboardEvent) => {
@@ -102,7 +106,7 @@ export function ReactionGame({ isMember, compact = false }: { isMember: boolean;
     );
   }
 
-  const tone = phase === "go" ? "gold" : phase === "early" ? "alarm" : "deep";
+  const tone = phase === "go" ? "gold" : phase === "early" || phase === "slow" ? "alarm" : "deep";
   return (
     <Stage
       ref={stageRef}
@@ -135,6 +139,12 @@ export function ReactionGame({ isMember, compact = false }: { isMember: boolean;
           <>
             <p className="font-display text-display-l">Too soon.</p>
             <p className="mt-3 text-ink-2">That attempt does not count. Press to try again.</p>
+          </>
+        )}
+        {phase === "slow" && (
+          <>
+            <p className="font-display text-display-l">Too slow.</p>
+            <p className="mt-3 text-ink-2">Over five seconds does not count. Press to try again.</p>
           </>
         )}
         {phase === "result" && <p className="text-ink-2">Weighing the result…</p>}

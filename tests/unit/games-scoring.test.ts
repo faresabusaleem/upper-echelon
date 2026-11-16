@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { GAME_KINDS, GAMES, dailyGame, formatScore, gameBySlug, isBetter, rateScore } from "@/lib/games/catalog";
 import { evaluate, minimumDurationMs } from "@/lib/games/validate";
 import { PASSAGES } from "@/lib/games/passages";
+import { REACTION_CEILING } from "@/lib/games/engine";
 
 describe("catalogue", () => {
   it("defines all eight games with unique slugs", () => {
@@ -63,6 +64,10 @@ describe("anti-cheat evaluation", () => {
     const r = evaluate("reaction", { times: [220, 230, 240, 250, 260] }, 2000);
     expect(r.ok && r.flagged).toBe(true);
     expect(r.ok && r.reason).toContain("faster than the trial");
+  });
+  it("rejects reaction attempts over the ceiling, which the game voids before they are kept", () => {
+    expect(evaluate("reaction", { times: [220, 230, 240, 250, REACTION_CEILING] }, slow).ok).toBe(true);
+    expect(evaluate("reaction", { times: [220, 230, 240, 250, REACTION_CEILING + 1] }, slow).ok).toBe(false);
   });
   it("rejects malformed payloads", () => {
     expect(evaluate("reaction", { times: [200, 200] }, slow).ok).toBe(false);

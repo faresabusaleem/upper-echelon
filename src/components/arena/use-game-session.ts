@@ -21,6 +21,8 @@ export type GameOutcome = {
   details: Record<string, unknown>;
   error?: string;
   rateLimited?: boolean;
+  /** Why the run could not be scored at all (shown instead of a meaningless zero). */
+  invalid?: string;
 };
 
 /**
@@ -69,6 +71,12 @@ export function useGameSession(kind: GameKind, isMember: boolean) {
         tier: null,
         details: local.ok ? local.details : details,
       };
+      if (!local.ok) {
+        // The server runs the same checks, so there is nothing worth sending: say why instead.
+        sessionRef.current = null;
+        setSubmitting(false);
+        return { ...base, invalid: local.error };
+      }
       try {
         if (isMember && sessionRef.current) {
           const res = await fetch("/api/games/submit", {

@@ -30,6 +30,27 @@ export function ResultPanel({
         : `Better than ${Math.round(pct)}% of members.`;
   const promoted = outcome.tier != null && outcome.tierBefore != null && outcome.tier > outcome.tierBefore;
 
+  if (outcome.invalid) {
+    return (
+      <div className="flex w-full flex-col items-start gap-6" role="status" aria-live="polite">
+        <div>
+          <p className="text-small text-muted">{g.name}</p>
+          <p className="mt-2 font-display text-display-l text-ink">Not scored.</p>
+          <p className="mt-3 text-lede text-ink-2">{outcome.invalid}</p>
+        </div>
+        {extra}
+        <div className="flex flex-wrap items-center gap-4">
+          <Button onClick={onAgain} autoFocus>
+            Try again
+          </Button>
+          <Link href="/arena" className="text-ink-2 underline hover:text-ink">
+            All trials
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex w-full flex-col items-start gap-8" role="status" aria-live="polite">
       <div>
