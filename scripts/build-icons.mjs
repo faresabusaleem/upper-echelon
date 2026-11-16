@@ -1,6 +1,7 @@
 // Builds every icon and brand raster from the two master marks in /brand.
 // Usage: node scripts/build-icons.mjs   (run after scripts/build-mark.mjs)
 import sharp from "sharp";
+import { optimize } from "svgo";
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 
 const GROUND = "#0b0b0a";
@@ -82,8 +83,11 @@ writeFileSync("public/icons/favicon.ico", ico([[16, pngs[16]], [32, pngs[32]], [
 
 // The engraving (the full mark) in ivory and gold, as SVG for the web and PNG for Open Graph images.
 const engr = (color) => engraving.replace("<svg ", `<svg fill="${color}" `).replaceAll("currentColor", color);
-writeFileSync("public/brand/engraving-ivory.svg", engr(IVORY));
-writeFileSync("public/brand/engraving-gold.svg", engr(GOLD));
+// The traced path is verbose; SVGO renders pixel-identically at well under half the bytes (it is the
+// landing page's LCP image).
+const web = (svg) => optimize(svg, { multipass: true }).data;
+writeFileSync("public/brand/engraving-ivory.svg", web(engr(IVORY)));
+writeFileSync("public/brand/engraving-gold.svg", web(engr(GOLD)));
 await sharp(Buffer.from(engr(IVORY)), { density: 144 }).resize(1400).png({ compressionLevel: 9 }).toFile("public/brand/engraving-ivory.png");
 await sharp(Buffer.from(engr(GOLD)), { density: 144 }).resize(1400).png({ compressionLevel: 9 }).toFile("public/brand/engraving-gold.png");
 writeFileSync("public/brand/mark-planes-gold.svg", planesSvg({ color: GOLD, stroke: 3.2 }));
