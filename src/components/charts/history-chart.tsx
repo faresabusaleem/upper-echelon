@@ -58,9 +58,8 @@ export function HistoryChart({
         <path d={bestPath} fill="none" stroke="var(--color-gold)" strokeWidth={2} />
         {points.map((p, i) => (
           <circle key={i} cx={x(i)} cy={y(p.score)} r={points.length > 60 ? 2 : 3} className="fill-[var(--color-ink-2)]">
-            <title>
-              {formatShortDate(p.at)}: {p.score} {unit}
-            </title>
+            {/* One string child: React's server renderer drops multi-part <title> children. */}
+            <title>{`${formatShortDate(p.at)}: ${p.score} ${unit}`}</title>
           </circle>
         ))}
         <text x={pad.l} y={H - 8} className="fill-[var(--color-muted)] text-[11px]">
