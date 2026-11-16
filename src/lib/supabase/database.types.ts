@@ -87,6 +87,12 @@ isOneToOne: false
       foreignKeyName: "bookmarks_thread_id_fkey"
       columns: ["thread_id"]
 isOneToOne: false
+      referencedRelation: "thread_list"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "bookmarks_thread_id_fkey"
+      columns: ["thread_id"]
+isOneToOne: false
       referencedRelation: "threads"
       referencedColumns: ["id"]
     },{
@@ -186,6 +192,12 @@ isOneToOne: false
       columns: ["category_id"]
 isOneToOne: false
       referencedRelation: "forum_categories"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "drafts_thread_id_fkey"
+      columns: ["thread_id"]
+isOneToOne: false
+      referencedRelation: "thread_list"
       referencedColumns: ["id"]
     },{
       foreignKeyName: "drafts_thread_id_fkey"
@@ -461,6 +473,12 @@ isOneToOne: false
       foreignKeyName: "notifications_thread_id_fkey"
       columns: ["thread_id"]
 isOneToOne: false
+      referencedRelation: "thread_list"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "notifications_thread_id_fkey"
+      columns: ["thread_id"]
+isOneToOne: false
       referencedRelation: "threads"
       referencedColumns: ["id"]
     },{
@@ -510,6 +528,12 @@ isOneToOne: false
                   }
                   Relationships: [
                     {
+      foreignKeyName: "polls_thread_id_fkey"
+      columns: ["thread_id"]
+isOneToOne: true
+      referencedRelation: "thread_list"
+      referencedColumns: ["id"]
+    },{
       foreignKeyName: "polls_thread_id_fkey"
       columns: ["thread_id"]
 isOneToOne: true
@@ -566,6 +590,12 @@ isOneToOne: false
       columns: ["removed_by"]
 isOneToOne: false
       referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "posts_thread_id_fkey"
+      columns: ["thread_id"]
+isOneToOne: false
+      referencedRelation: "thread_list"
       referencedColumns: ["id"]
     },{
       foreignKeyName: "posts_thread_id_fkey"
@@ -683,6 +713,12 @@ isOneToOne: false
       foreignKeyName: "revisions_thread_id_fkey"
       columns: ["thread_id"]
 isOneToOne: false
+      referencedRelation: "thread_list"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "revisions_thread_id_fkey"
+      columns: ["thread_id"]
+isOneToOne: false
       referencedRelation: "threads"
       referencedColumns: ["id"]
     }
@@ -761,6 +797,12 @@ isOneToOne: false
       foreignKeyName: "thread_subscriptions_thread_id_fkey"
       columns: ["thread_id"]
 isOneToOne: false
+      referencedRelation: "thread_list"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "thread_subscriptions_thread_id_fkey"
+      columns: ["thread_id"]
+isOneToOne: false
       referencedRelation: "threads"
       referencedColumns: ["id"]
     },{
@@ -784,6 +826,12 @@ isOneToOne: false
                   }
                   Relationships: [
                     {
+      foreignKeyName: "thread_votes_thread_id_fkey"
+      columns: ["thread_id"]
+isOneToOne: false
+      referencedRelation: "thread_list"
+      referencedColumns: ["id"]
+    },{
       foreignKeyName: "thread_votes_thread_id_fkey"
       columns: ["thread_id"]
 isOneToOne: false
@@ -910,7 +958,39 @@ isOneToOne: true
                 }
           }
           Views: {
-            [_ in never]: never
+            "thread_list": {
+                  Row: {
+                    "author_avatar": string | null,"author_id": string | null,"author_name": string | null,"author_tier": number | null,"author_username": string | null,"category_id": number,"category_min_tier": number,"category_name": string,"category_slug": string,"created_at": string,"directory_test_id": string | null,"has_poll": boolean | null,"id": number,"is_locked": boolean,"is_official": boolean,"is_pinned": boolean,"last_activity_at": string,"last_reply_name": string | null,"last_reply_username": string | null,"removed_at": string | null,"reply_count": number,"score": number,"solved_post_id": number | null,"tags": (string)[],"title": string
+                  }
+                  ComputedFields: never
+                  Relationships: [
+                    {
+      foreignKeyName: "threads_author_id_fkey"
+      columns: ["author_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "threads_category_id_fkey"
+      columns: ["category_id"]
+isOneToOne: false
+      referencedRelation: "forum_categories"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "threads_directory_test_id_fkey"
+      columns: ["directory_test_id"]
+isOneToOne: false
+      referencedRelation: "directory_tests"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "threads_solved_fk"
+      columns: ["solved_post_id"]
+isOneToOne: false
+      referencedRelation: "posts"
+      referencedColumns: ["id"]
+    }
+                  ]
+                }
           }
           Functions: {
             "admin_set_role":
