@@ -6,7 +6,7 @@ import { DeleteAccount } from "@/components/settings/delete-account";
 export const metadata: Metadata = { title: "Your data" };
 
 export default async function DataPage() {
-  const viewer = await requireViewer();
+  const viewer = await requireViewer({ allowBanned: true });
   return (
     <div className="flex flex-col gap-16">
       <section aria-labelledby="export-h">
