@@ -33,7 +33,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     title: t.title,
     description: excerpt(t.body, 160),
     alternates: { canonical: `/forum/t/${t.id}/${slugify(t.title)}` },
-    openGraph: { type: "article", title: t.title, description: excerpt(t.body, 200) },
+    openGraph: { type: "article", title: t.title, description: excerpt(t.body, 200), images: [{ url: `/api/og/thread/${t.id}`, width: 1200, height: 630 }] },
+    twitter: { card: "summary_large_image", images: [`/api/og/thread/${t.id}`] },
   };
 }
 
