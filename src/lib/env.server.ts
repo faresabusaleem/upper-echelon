@@ -17,26 +17,21 @@ const serverSchema = z.object({
 });
 
 type ServerEnv = z.infer<typeof serverSchema>;
-let cached: ServerEnv | undefined;
+type Key = keyof ServerEnv;
+const cache = new Map<Key, unknown>();
 
-function load(): ServerEnv {
-  cached ??= serverSchema.parse({
-    SUPABASE_SECRET_KEY: process.env.SUPABASE_SECRET_KEY,
-    TURNSTILE_SECRET_KEY: process.env.TURNSTILE_SECRET_KEY || undefined,
-    CRON_SECRET: process.env.CRON_SECRET || undefined,
-    IP_HASH_SALT: process.env.IP_HASH_SALT || undefined,
-    SMTP_HOST: process.env.SMTP_HOST || undefined,
-    SMTP_PORT: process.env.SMTP_PORT || undefined,
-    SMTP_USER: process.env.SMTP_USER || undefined,
-    SMTP_PASS: process.env.SMTP_PASS || undefined,
-    SMTP_SECURE: process.env.SMTP_SECURE || undefined,
-    EMAIL_FROM: process.env.EMAIL_FROM || undefined,
-    CONTACT_EMAIL: process.env.CONTACT_EMAIL || undefined,
-  });
-  return cached;
+function read(key: Key): unknown {
+  if (!cache.has(key)) {
+    // Empty strings count as unset, so defaults apply when a variable exists but is blank.
+    cache.set(key, serverSchema.shape[key].parse(process.env[key] || undefined));
+  }
+  return cache.get(key);
 }
 
-/** Validated on first use, so builds and public pages work before every secret is configured. */
+/**
+ * Each secret is validated on first use, one at a time: builds and public pages work before every
+ * secret is configured, and a missing key only fails the code that actually needs it.
+ */
 export const serverEnv = new Proxy({} as ServerEnv, {
-  get: (_target, key: string) => load()[key as keyof ServerEnv],
+  get: (_target, key) => (typeof key === "string" && key in serverSchema.shape ? read(key as Key) : undefined),
 });
