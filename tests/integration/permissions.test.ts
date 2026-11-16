@@ -211,6 +211,21 @@ describe.skipIf(!enabled)("row-level security and database rules", () => {
     expect((asMod?.[0]?.snapshot as { body?: string })?.body).toBeTruthy();
   });
 
+  it("does not let anyone probe other members' follows, blocks or streaks", async () => {
+    const probe = await anon.rpc("is_following" as never, { a: a.id, b: b.id } as never);
+    expect(probe.error).not.toBeNull();
+    const blocks = await b.client.rpc("is_blocked_between" as never, { a: a.id, b: mod.id } as never);
+    expect(blocks.error).not.toBeNull();
+    const pair = await b.client.rpc("can_message", { sender: a.id, recipient: mod.id });
+    expect(pair.data).toBe(false);
+    await b.client.from("user_settings").update({ activity_visibility: "only_me", game_stats_visibility: "only_me" }).eq("user_id", b.id);
+    const { data: streak } = await a.client.rpc("longest_streak", { uid: b.id });
+    expect(streak).toBe(0);
+    const { data: own } = await b.client.rpc("longest_streak", { uid: b.id });
+    expect(own).toBeGreaterThan(0);
+    await b.client.from("user_settings").update({ activity_visibility: "everyone", game_stats_visibility: "everyone" }).eq("user_id", b.id);
+  });
+
   it("exposes percentiles to visitors without exposing anyone's results", async () => {
     const { data, error } = await anon.rpc("game_percentile", { g: "sequence", s: 20 });
     expect(error).toBeNull();
