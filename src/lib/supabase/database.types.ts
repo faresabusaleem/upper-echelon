@@ -1111,6 +1111,9 @@ isOneToOne: false
 "mod_resolve_report":
 { Args: { "p_note"?: string,"p_report": number,"p_status": string }; Returns: undefined
                            },
+"mod_review_result":
+{ Args: { "p_note"?: string,"p_result": number,"p_valid": boolean }; Returns: undefined
+                           },
 "mod_revoke_sanction":
 { Args: { "p_sanction": number }; Returns: undefined
                            },
