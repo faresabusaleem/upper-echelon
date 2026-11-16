@@ -16,16 +16,27 @@ const serverSchema = z.object({
   CONTACT_EMAIL: z.string().optional(),
 });
 
-export const serverEnv = serverSchema.parse({
-  SUPABASE_SECRET_KEY: process.env.SUPABASE_SECRET_KEY,
-  TURNSTILE_SECRET_KEY: process.env.TURNSTILE_SECRET_KEY || undefined,
-  CRON_SECRET: process.env.CRON_SECRET || undefined,
-  IP_HASH_SALT: process.env.IP_HASH_SALT || undefined,
-  SMTP_HOST: process.env.SMTP_HOST || undefined,
-  SMTP_PORT: process.env.SMTP_PORT || undefined,
-  SMTP_USER: process.env.SMTP_USER || undefined,
-  SMTP_PASS: process.env.SMTP_PASS || undefined,
-  SMTP_SECURE: process.env.SMTP_SECURE || undefined,
-  EMAIL_FROM: process.env.EMAIL_FROM || undefined,
-  CONTACT_EMAIL: process.env.CONTACT_EMAIL || undefined,
+type ServerEnv = z.infer<typeof serverSchema>;
+let cached: ServerEnv | undefined;
+
+function load(): ServerEnv {
+  cached ??= serverSchema.parse({
+    SUPABASE_SECRET_KEY: process.env.SUPABASE_SECRET_KEY,
+    TURNSTILE_SECRET_KEY: process.env.TURNSTILE_SECRET_KEY || undefined,
+    CRON_SECRET: process.env.CRON_SECRET || undefined,
+    IP_HASH_SALT: process.env.IP_HASH_SALT || undefined,
+    SMTP_HOST: process.env.SMTP_HOST || undefined,
+    SMTP_PORT: process.env.SMTP_PORT || undefined,
+    SMTP_USER: process.env.SMTP_USER || undefined,
+    SMTP_PASS: process.env.SMTP_PASS || undefined,
+    SMTP_SECURE: process.env.SMTP_SECURE || undefined,
+    EMAIL_FROM: process.env.EMAIL_FROM || undefined,
+    CONTACT_EMAIL: process.env.CONTACT_EMAIL || undefined,
+  });
+  return cached;
+}
+
+/** Validated on first use, so builds and public pages work before every secret is configured. */
+export const serverEnv = new Proxy({} as ServerEnv, {
+  get: (_target, key: string) => load()[key as keyof ServerEnv],
 });
