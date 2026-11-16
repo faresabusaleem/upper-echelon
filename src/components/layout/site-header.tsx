@@ -65,7 +65,7 @@ export async function SiteHeader({ overlay = false }: { overlay?: boolean }) {
         </nav>
         <div className="flex items-center gap-2">
           {member ? (
-            <LiveCounts userId={member.id} initial={counts} />
+            <LiveCounts key={`${counts.notifications}-${counts.messages}`} userId={member.id} initial={counts} />
           ) : (
             <div className="hidden items-center gap-5 sm:flex">
               <Link href="/login" className="text-[0.9375rem] text-ink-2 hover:text-ink">

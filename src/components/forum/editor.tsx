@@ -16,6 +16,18 @@ import {
 import { Notice } from "@/components/ui/notice";
 import { cn } from "@/lib/utils";
 
+type ToolName = "bold" | "italic" | "link" | "quote" | "list" | "code" | "maths" | "image";
+const TOOLS: Array<{ name: ToolName; label: string; icon: React.ReactNode; key?: string }> = [
+  { name: "bold", label: "Bold (Ctrl+B)", icon: <BoldIcon size={18} />, key: "b" },
+  { name: "italic", label: "Italic (Ctrl+I)", icon: <ItalicIcon size={18} />, key: "i" },
+  { name: "link", label: "Link (Ctrl+K)", icon: <LinkIcon size={18} />, key: "k" },
+  { name: "quote", label: "Quote", icon: <QuoteIcon size={18} /> },
+  { name: "list", label: "List", icon: <ListIcon size={18} /> },
+  { name: "code", label: "Code", icon: <CodeIcon size={18} /> },
+  { name: "maths", label: "Maths", icon: <SigmaIcon size={18} /> },
+  { name: "image", label: "Image", icon: <ImageIcon size={18} /> },
+];
+
 type DraftTarget = { threadId?: number | null; categoryId?: number | null; getTitle?: () => string };
 
 /**
@@ -34,7 +46,6 @@ export function Editor({
   minRows = 8,
   invalid,
   describedBy,
-  resetSignal,
 }: {
   id: string;
   name?: string;
@@ -47,7 +58,6 @@ export function Editor({
   minRows?: number;
   invalid?: boolean;
   describedBy?: string;
-  resetSignal?: number;
 }) {
   const [value, setValue] = useState(defaultValue);
   const [tab, setTab] = useState<"write" | "preview">("write");
@@ -60,25 +70,16 @@ export function Editor({
   const fileRef = useRef<HTMLInputElement>(null);
   const loaded = useRef(false);
 
-  // Restore a local draft when there is no server-provided value.
+  // Restore a local draft after hydration (localStorage is an external store the server cannot see).
   useEffect(() => {
     if (loaded.current || !draftKey) return;
     loaded.current = true;
+    let local: string | null = null;
     try {
-      const local = localStorage.getItem(draftKey);
-      if (local && !defaultValue) setValue(local);
+      local = localStorage.getItem(draftKey);
     } catch {}
+    if (local && !defaultValue) setValue(local);
   }, [draftKey, defaultValue]);
-
-  // Clear after a successful submit.
-  useEffect(() => {
-    if (resetSignal === undefined || resetSignal === 0) return;
-    setValue("");
-    setTab("write");
-    try {
-      if (draftKey) localStorage.removeItem(draftKey);
-    } catch {}
-  }, [resetSignal, draftKey]);
 
   // Autosave: locally at once, to the account after a pause.
   useEffect(() => {
@@ -184,16 +185,18 @@ export function Editor({
     });
   };
 
-  const tools: Array<{ label: string; icon: React.ReactNode; run: () => void; key?: string }> = [
-    { label: "Bold (Ctrl+B)", icon: <BoldIcon size={18} />, run: () => wrap("**", "**", "bold"), key: "b" },
-    { label: "Italic (Ctrl+I)", icon: <ItalicIcon size={18} />, run: () => wrap("*", "*", "italic"), key: "i" },
-    { label: "Link (Ctrl+K)", icon: <LinkIcon size={18} />, run: () => wrap("[", "](https://)", "text"), key: "k" },
-    { label: "Quote", icon: <QuoteIcon size={18} />, run: () => linePrefix("> ") },
-    { label: "List", icon: <ListIcon size={18} />, run: () => linePrefix("- ") },
-    { label: "Code", icon: <CodeIcon size={18} />, run: () => wrap("\n```\n", "\n```\n", "code") },
-    { label: "Maths", icon: <SigmaIcon size={18} />, run: () => wrap("$", "$", "x^2") },
-    { label: "Image", icon: <ImageIcon size={18} />, run: () => fileRef.current?.click() },
-  ];
+  const runTool = (name: ToolName) => {
+    switch (name) {
+      case "bold": return wrap("**", "**", "bold");
+      case "italic": return wrap("*", "*", "italic");
+      case "link": return wrap("[", "](https://)", "text");
+      case "quote": return linePrefix("> ");
+      case "list": return linePrefix("- ");
+      case "code": return wrap("\n```\n", "\n```\n", "code");
+      case "maths": return wrap("$", "$", "x^2");
+      case "image": return fileRef.current?.click();
+    }
+  };
 
   return (
     <div className="flex flex-col">
@@ -217,14 +220,14 @@ export function Editor({
         </div>
         {tab === "write" && (
           <div className="flex flex-wrap" role="toolbar" aria-label="Formatting">
-            {tools.map((t) => (
+            {TOOLS.map((t) => (
               <button
-                key={t.label}
+                key={t.name}
                 type="button"
                 title={t.label}
                 aria-label={t.label}
-                onClick={t.run}
-                disabled={t.label === "Image" && uploading}
+                onClick={() => runTool(t.name)}
+                disabled={t.name === "image" && uploading}
                 className="inline-flex size-9 items-center justify-center text-ink-2 hover:bg-panel hover:text-ink disabled:opacity-40"
               >
                 {t.icon}
@@ -268,10 +271,10 @@ export function Editor({
               if (e.key === "Escape") return setMention(null);
             }
             if ((e.metaKey || e.ctrlKey) && !e.shiftKey) {
-              const tool = tools.find((t) => t.key === e.key.toLowerCase());
+              const tool = TOOLS.find((t) => t.key === e.key.toLowerCase());
               if (tool) {
                 e.preventDefault();
-                tool.run();
+                runTool(tool.name);
               }
             }
           }}

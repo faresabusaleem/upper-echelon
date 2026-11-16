@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Mark } from "@/components/brand/mark";
 
 export const metadata = { title: "Offline" };
@@ -9,7 +10,7 @@ export default function OfflinePage() {
       <Mark size={64} decorative className="text-ink-2" strokeWidth={2.2} />
       <h1 className="mt-10 font-display text-display-l text-ink">You are offline.</h1>
       <p className="mt-6 text-lede text-ink-2">The house will still be here when the connection returns. Try again in a moment.</p>
-      <a href="/" className="mt-10 inline-flex h-12 w-fit items-center bg-gold px-6 font-medium text-ground">Try again</a>
+      <Link href="/" className="mt-10 inline-flex h-12 w-fit items-center bg-gold px-6 font-medium text-ground">Try again</Link>
     </main>
   );
 }

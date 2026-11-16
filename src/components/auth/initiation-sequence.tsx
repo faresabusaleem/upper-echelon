@@ -56,16 +56,6 @@ export function InitiationSequence({
 
   useEffect(() => headingRef.current?.focus(), [i]);
 
-  // Email sign-ups chose their name, subjects and date of birth before confirming: seal at once,
-  // so the likeness upload and the first trial are saved to the record.
-  const autoSealed = useRef(false);
-  useEffect(() => {
-    if (!sealed && steps[0] === "likeness" && !autoSealed.current) {
-      autoSealed.current = true;
-      void seal();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   // Seal as soon as the required facts are known, so the first trial is saved to the record.
   const seal = async () => {
@@ -91,6 +81,17 @@ export function InitiationSequence({
     setSealed(true);
     return true;
   };
+
+  // Email sign-ups chose their name, subjects and date of birth before confirming: seal at once,
+  // so the likeness upload and the first trial are saved to the record.
+  const autoSealed = useRef(false);
+  useEffect(() => {
+    if (!sealed && steps[0] === "likeness" && !autoSealed.current) {
+      autoSealed.current = true;
+      void seal();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const advance = async () => {
     setError(null);

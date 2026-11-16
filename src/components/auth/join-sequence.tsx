@@ -33,7 +33,11 @@ export function JoinSequence({ googleSlot }: { googleSlot?: React.ReactNode }) {
   const [displayError, setDisplayError] = useState<string | undefined>();
   const [checking, setChecking] = useState(false);
   const [available, setAvailable] = useState<boolean | null>(null);
-  const [state, formAction] = useActionState<FormState, FormData>(signUpAction, null);
+  const [state, formAction] = useActionState<FormState, FormData>(async (prev, fd) => {
+    const r = await signUpAction(prev, fd);
+    if (r && !r.ok && r.fieldErrors?.username) setStep(0);
+    return r;
+  }, null);
   const [clientErrors, setClientErrors] = useState<Record<string, string>>({});
   const headingRef = useRef<HTMLHeadingElement>(null);
 
@@ -41,24 +45,25 @@ export function JoinSequence({ googleSlot }: { googleSlot?: React.ReactNode }) {
     headingRef.current?.focus();
   }, [step]);
 
-  // Debounced availability check.
-  useEffect(() => {
+  const checkTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const onUsername = (raw: string) => {
+    const value = raw.replace(/\s/g, "");
+    setUsername(value);
     setAvailable(null);
-    const parsed = usernameSchema.safeParse(username);
-    if (!parsed.success) return;
+    if (checkTimer.current) clearTimeout(checkTimer.current);
+    const parsed = usernameSchema.safeParse(value);
+    if (!parsed.success) {
+      setChecking(false);
+      return;
+    }
     setChecking(true);
-    const t = setTimeout(async () => {
+    checkTimer.current = setTimeout(async () => {
       const res = await checkUsername(parsed.data);
       setAvailable(res.available);
       setNameError(res.available ? undefined : res.message);
       setChecking(false);
     }, 350);
-    return () => clearTimeout(t);
-  }, [username]);
-
-  useEffect(() => {
-    if (state && !state.ok && state.fieldErrors?.username) setStep(0);
-  }, [state]);
+  };
 
   const nextFromName = () => {
     const u = usernameSchema.safeParse(username);
@@ -128,7 +133,7 @@ export function JoinSequence({ googleSlot }: { googleSlot?: React.ReactNode }) {
                 <Input
                   id="username-input"
                   value={username}
-                  onChange={(e) => setUsername(e.target.value.replace(/\s/g, ""))}
+                  onChange={(e) => onUsername(e.target.value)}
                   autoComplete="username"
                   autoCapitalize="off"
                   spellCheck={false}

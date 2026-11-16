@@ -50,7 +50,6 @@ export function VoteButton({
   const [state, setState] = useState({ count, on });
   const [pending, start] = useTransition();
   const [error, setError] = useState<string | null>(null);
-  useEffect(() => setState({ count, on }), [count, on]);
   return (
     <span className="inline-flex flex-col items-start">
       <button
@@ -335,11 +334,24 @@ function HistoryDialog({ open, onClose, target }: { open: boolean; onClose: () =
   const [rows, setRows] = useState<Array<{ id: number; title: string | null; body: string; created_at: string; editor: string | null }> | null>(null);
   useEffect(() => {
     if (!open) return;
-    setRows(null);
-    void getRevisionsAction(target).then(setRows);
+    let cancelled = false;
+    void getRevisionsAction(target).then((r) => {
+      if (!cancelled) setRows(r);
+    });
+    return () => {
+      cancelled = true;
+    };
   }, [open, target]);
   return (
-    <Dialog open={open} onClose={onClose} title="Edit history" wide>
+    <Dialog
+      open={open}
+      onClose={() => {
+        setRows(null);
+        onClose();
+      }}
+      title="Edit history"
+      wide
+    >
       {!rows ? (
         <p className="text-muted">Loading…</p>
       ) : rows.length === 0 ? (
@@ -365,6 +377,9 @@ export function ReplyForm({ threadId, initialDraft }: { threadId: number; initia
   const [state, action] = useActionState<ForumState, FormData>(async (s, fd) => {
     const r = await createReplyAction(s, fd);
     if (r?.ok) {
+      try {
+        localStorage.removeItem(`ue-draft-reply-${threadId}`);
+      } catch {}
       setReset((n) => n + 1);
       router.refresh();
       const anchor = r.message;
@@ -377,14 +392,14 @@ export function ReplyForm({ threadId, initialDraft }: { threadId: number; initia
     <form action={action} className="flex flex-col gap-4">
       <input type="hidden" name="thread_id" value={threadId} />
       <Editor
+        key={reset}
         id="reply-body"
         label="Your reply"
-        defaultValue={initialDraft}
+        defaultValue={reset ? "" : initialDraft}
         draftKey={`ue-draft-reply-${threadId}`}
         draft={draft}
         acceptQuotes
         minRows={6}
-        resetSignal={reset}
         placeholder="Add to the argument."
       />
       {state && !state.ok && <Notice tone={state.kind === "rate_limited" ? "warning" : "error"}>{state.message}</Notice>}
@@ -401,7 +416,9 @@ export function PollView({
   mine,
   threadId,
   isMember,
+  closed,
 }: {
+  closed: boolean;
   poll: { id: number; question: string; options: string[]; allow_multiple: boolean; closes_at: string | null };
   results: Record<number, number>;
   mine: number[];
@@ -411,7 +428,6 @@ export function PollView({
   const [choice, setChoice] = useState<number[]>([]);
   const [pending, start] = useTransition();
   const [error, setError] = useState<string | null>(null);
-  const closed = !!poll.closes_at && new Date(poll.closes_at).getTime() < Date.now();
   const voted = mine.length > 0;
   const showResults = voted || closed || !isMember;
   const total = Object.values(results).reduce((a, b) => a + b, 0);

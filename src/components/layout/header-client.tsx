@@ -42,8 +42,6 @@ export function LiveCounts({ userId, initial }: { userId: string; initial: { not
   const [counts, setCounts] = useState(initial);
   const pathname = usePathname();
 
-  useEffect(() => setCounts(initial), [initial]);
-
   useEffect(() => {
     const supabase = getBrowserClient();
     const channel = supabase
@@ -100,7 +98,12 @@ export function HeaderMenu({ member, nav }: { member: Member | null; nav: { href
   const panelRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
 
-  useEffect(() => setOpen(false), [pathname]);
+  // Close the menu when the route changes (state adjusted during render, per the React docs).
+  const [lastPath, setLastPath] = useState(pathname);
+  if (lastPath !== pathname) {
+    setLastPath(pathname);
+    setOpen(false);
+  }
 
   useEffect(() => {
     if (!open) return;

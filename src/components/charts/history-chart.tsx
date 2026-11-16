@@ -36,12 +36,13 @@ export function HistoryChart({
     const t = (v - min) / (max - min);
     return pad.t + (lowerIsBetter ? t : 1 - t) * (H - pad.t - pad.b);
   };
-  let best = scores[0];
-  const bestPath = points
-    .map((p, i) => {
-      if (lowerIsBetter ? p.score < best : p.score > best) best = p.score;
-      return `${i === 0 ? "M" : "H"}${x(i).toFixed(1)}${i === 0 ? ` ${y(best).toFixed(1)}` : ` V${y(best).toFixed(1)}`}`;
-    })
+  const running = scores.reduce<number[]>((acc, s, i) => {
+    const prev = i === 0 ? s : acc[i - 1];
+    acc.push(lowerIsBetter ? Math.min(prev, s) : Math.max(prev, s));
+    return acc;
+  }, []);
+  const bestPath = running
+    .map((b, i) => (i === 0 ? `M${x(0).toFixed(1)} ${y(b).toFixed(1)}` : `H${x(i).toFixed(1)} V${y(b).toFixed(1)}`))
     .join(" ");
   const ticks = [0, 0.5, 1].map((t) => min + t * (max - min));
   return (

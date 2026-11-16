@@ -77,6 +77,9 @@ export default async function ThreadPage({ params }: Props) {
     isModerator ? supabase.from("forum_categories").select("id, name").order("position") : Promise.resolve({ data: [] }),
   ]);
 
+  // Server Components render once per request, so reading the clock here is deterministic per response.
+  // eslint-disable-next-line react-hooks/purity
+  const now = Date.now();
   let pollResults: Record<number, number> = {};
   let myPoll: number[] = [];
   if (poll) {
@@ -142,11 +145,12 @@ export default async function ThreadPage({ params }: Props) {
           <div className="prose-ue mt-4" dangerouslySetInnerHTML={{ __html: bodyHtml }} />
           {poll && (
             <div className="mt-8 max-w-xl">
-              <PollView poll={poll} results={pollResults} mine={myPoll} threadId={t.id} isMember={isMember} />
+              <PollView poll={poll} results={pollResults} mine={myPoll} threadId={t.id} isMember={isMember} closed={!!poll.closes_at && new Date(poll.closes_at).getTime() < now} />
             </div>
           )}
           <div className="mt-6 flex flex-wrap items-start gap-3">
             <VoteButton
+              key={`t-${t.score}-${votedThread}`}
               kind="thread"
               id={t.id}
               threadId={t.id}
@@ -206,6 +210,7 @@ export default async function ThreadPage({ params }: Props) {
                   <div className="prose-ue mt-3" dangerouslySetInnerHTML={{ __html: p.html }} />
                   <div className="mt-4 flex flex-wrap items-start gap-3">
                     <VoteButton
+                      key={`p-${p.id}-${p.score}-${votedPosts.has(p.id)}`}
                       kind="post"
                       id={p.id}
                       threadId={t.id}

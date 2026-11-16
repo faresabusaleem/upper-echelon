@@ -1,24 +1,26 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useState, useSyncExternalStore } from "react";
 
 const KEY = "ue-cookie-notice-v1";
+const subscribe = () => () => {};
+const readDismissed = () => {
+  try {
+    return localStorage.getItem(KEY) === "1";
+  } catch {
+    return true; // storage unavailable: do not nag
+  }
+};
 
 /**
  * We set only essential cookies (the sign-in session). There is nothing to consent to, so this is
  * a one-time notice rather than a consent banner. Dismissal is remembered in localStorage.
  */
 export function CookieNotice() {
-  const [show, setShow] = useState(false);
-  useEffect(() => {
-    try {
-      if (!localStorage.getItem(KEY)) setShow(true);
-    } catch {
-      // Storage unavailable: do not nag.
-    }
-  }, []);
-  if (!show) return null;
+  const stored = useSyncExternalStore(subscribe, readDismissed, () => true);
+  const [dismissed, setDismissed] = useState(false);
+  if (stored || dismissed) return null;
   return (
     <div
       role="region"
@@ -38,7 +40,7 @@ export function CookieNotice() {
           try {
             localStorage.setItem(KEY, "1");
           } catch {}
-          setShow(false);
+          setDismissed(true);
         }}
       >
         Understood
