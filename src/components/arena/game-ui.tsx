@@ -35,10 +35,12 @@ export function GameIntro({
   kind,
   onStart,
   note,
+  autoFocus = false,
 }: {
   kind: GameKind;
   onStart: () => void;
   note?: ReactNode;
+  autoFocus?: boolean;
 }) {
   const g = GAMES[kind];
   return (
@@ -50,7 +52,7 @@ export function GameIntro({
         ))}
       </ol>
       {note}
-      <Button onClick={onStart} size="lg" autoFocus>
+      <Button onClick={onStart} size="lg" autoFocus={autoFocus}>
         Begin the trial
       </Button>
     </div>

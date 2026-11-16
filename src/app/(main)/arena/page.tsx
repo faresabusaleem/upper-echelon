@@ -70,7 +70,7 @@ export default async function ArenaPage() {
                 href={`/arena/${g.slug}`}
                 className="group grid grid-cols-[1fr_auto] items-center gap-x-6 gap-y-1 py-6 transition-colors duration-200 hover:bg-raised sm:grid-cols-[minmax(0,1.1fr)_minmax(0,1.4fr)_10rem_auto] sm:px-4"
               >
-                <span className="font-display text-display-m leading-none text-ink transition-colors group-hover:text-gold-bright">
+                <span className="col-start-1 row-start-1 font-display text-display-m leading-none text-ink transition-colors group-hover:text-gold-bright sm:col-auto sm:row-auto">
                   {g.name}
                 </span>
                 <span className="col-span-2 row-start-2 text-ink-2 sm:col-span-1 sm:row-start-auto">{g.measures}</span>
@@ -86,7 +86,7 @@ export default async function ArenaPage() {
                     <span className="text-muted">{viewer ? "Not yet played" : g.line}</span>
                   )}
                 </span>
-                <ArrowRightIcon className="row-start-1 text-muted transition-transform duration-200 group-hover:translate-x-1 group-hover:text-ink sm:row-start-auto" />
+                <ArrowRightIcon className="col-start-2 row-start-1 text-muted transition-transform duration-200 group-hover:translate-x-1 group-hover:text-ink sm:col-auto sm:row-auto" />
               </Link>
             </li>
           );

@@ -85,6 +85,10 @@ export default async function Landing() {
       <main id="main" className="relative">
         {/* ------------------------------------------------------------------ split stage */}
         <div className="relative lg:grid lg:grid-cols-[47%_53%]">
+          <div className="absolute inset-x-0 top-0 z-30 flex items-center justify-between px-6 pt-6 lg:hidden">
+            <span className="bg-ground/80 px-2 py-1.5"><Wordmark compact /></span>
+            <Link href="/login" className="bg-ground px-3 py-2 text-small text-ink">Sign in</Link>
+          </div>
           <aside className="relative h-[58svh] p-3 lg:sticky lg:top-0 lg:h-svh lg:p-5" aria-label="Pictures">
             <LandingStage />
           </aside>
@@ -99,10 +103,6 @@ export default async function Landing() {
                 <Link href="/login" className="text-ink-2 hover:text-ink">Sign in</Link>
                 <ButtonLink href="/join" size="sm">Begin your initiation</ButtonLink>
               </header>
-              <div className="absolute left-0 right-0 top-0 z-30 flex items-center justify-between px-5 pt-5 lg:hidden">
-                <Wordmark compact />
-                <Link href="/login" className="bg-ground px-3 py-2 text-small text-ink">Sign in</Link>
-              </div>
 
               <div className="flex flex-1 flex-col justify-center px-[var(--gutter)] pt-8 lg:items-center lg:pt-0">
                 <div className="max-w-[26ch] lg:-mt-[12svh]">
@@ -243,7 +243,7 @@ export default async function Landing() {
                           width={200}
                           height={266}
                           sizes="200px"
-                          className="aspect-[3/4] w-full shrink-0 object-cover sm:w-[8.5rem]"
+                          className="aspect-[4/3] w-full shrink-0 object-cover sm:aspect-[3/4] sm:w-[8.5rem]"
                         />
                       )}
                       <ul className="flex flex-col gap-3.5 text-[1.0625rem] text-ink-2">

@@ -60,7 +60,10 @@ describe.skipIf(!enabled)("row-level security and database rules", () => {
   }, 60_000);
 
   afterAll(async () => {
-    for (const id of created) await admin.auth.admin.deleteUser(id);
+    for (const id of created) {
+      await admin.rpc("prepare_account_deletion", { uid: id });
+      await admin.auth.admin.deleteUser(id);
+    }
   });
 
   it("refuses sign-ups under 13", async () => {

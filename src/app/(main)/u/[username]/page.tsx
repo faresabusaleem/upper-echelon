@@ -125,7 +125,7 @@ export default async function ProfilePage({ params, searchParams }: Props) {
         aria-label={p.banner_url ? `${p.display_name}'s banner` : undefined}
       />
       <div className="mx-auto w-full max-w-[96rem] px-[var(--gutter)]">
-        <div className="-mt-14 flex flex-col gap-6 sm:-mt-20 sm:flex-row sm:items-end sm:justify-between">
+        <div className="relative z-10 -mt-14 flex flex-col gap-6 sm:-mt-20 sm:flex-row sm:items-end sm:justify-between">
           <div className="flex flex-col gap-5 sm:flex-row sm:items-end">
             <Avatar src={p.avatar_url} name={p.display_name} size={136} className="ring-8 ring-ground" />
             <div className="pb-1">

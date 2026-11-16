@@ -53,6 +53,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.4.6",
     "jsdom": "^31.0.1",
+    "playwright-core": "^1.65.1",
     "potrace": "^2.1.8",
     "prettier": "^3.10.1",
     "supabase": "^3.2.0",
