@@ -86,18 +86,20 @@ export default async function DirectoryPage({ searchParams }: PageProps<"/direct
                 {t.link_status !== "ok" && <p className="mt-2 text-small text-danger">Official page currently unreachable</p>}
               </div>
               <p className="text-ink-2">{t.measures}</p>
-              <dl className="grid grid-cols-2 gap-x-6 gap-y-2 text-small">
-                <div><dt className="text-muted">Difficulty</dt><dd className="text-ink">{DIFFICULTY[t.difficulty]}</dd></div>
-                <div><dt className="text-muted">Cost</dt><dd className="text-ink">{t.is_free ? "Free" : (t.cost ?? "Not stated")}</dd></div>
-                <div><dt className="text-muted">Items</dt><dd className="text-ink">{t.item_count ?? "Not stated"}</dd></div>
-                <div><dt className="text-muted">Time</dt><dd className="text-ink">{t.duration ?? "Not stated"}</dd></div>
-                <div className="col-span-2 flex gap-5 pt-2">
+              <div className="flex flex-col gap-4 text-small">
+                <dl className="grid grid-cols-2 gap-x-6 gap-y-2">
+                  <div><dt className="text-muted">Difficulty</dt><dd className="text-ink">{DIFFICULTY[t.difficulty]}</dd></div>
+                  <div><dt className="text-muted">Cost</dt><dd className="text-ink">{t.is_free ? "Free" : (t.cost ?? "Not stated")}</dd></div>
+                  <div><dt className="text-muted">Items</dt><dd className="text-ink">{t.item_count ?? "Not stated"}</dd></div>
+                  <div><dt className="text-muted">Time</dt><dd className="text-ink">{t.duration ?? "Not stated"}</dd></div>
+                </dl>
+                <div className="flex gap-5">
                   <Link href={`/directory/${t.slug}`} className="text-ink underline hover:text-gold-bright">Details</Link>
                   <a href={t.url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-ink underline hover:text-gold-bright">
                     Official test <ExternalIcon size={16} />
                   </a>
                 </div>
-              </dl>
+              </div>
             </li>
           ))}
         </ol>
