@@ -34,12 +34,15 @@ To make yourself an administrator locally:
    ```
 3. **Authentication → URL configuration**: Site URL `https://<your-app>.vercel.app`; redirect URLs
    `https://<your-app>.vercel.app/**`.
-4. **Authentication → Email**: enable *Confirm email*, *Secure password change*; minimum password
-   length 10 with letters and digits. Paste the four templates from `supabase/templates/` (subjects in
-   `supabase/config.toml`).
-5. **Authentication → SMTP**: required for production (the built-in sender only reaches your own team,
-   2 emails an hour). Brevo: SMTP host `smtp-relay.brevo.com`, port 587, your Brevo login and an SMTP
-   key; sender = an address you verified in Brevo.
+4. **Authentication → Sign In / Providers**: enable *Confirm email* and *Allow manual linking* (used to
+   link Google from settings). In the Email provider: *Secure password change* on, minimum password
+   length 10, requirements *Letters and digits*.
+5. **Authentication → Emails → SMTP Settings**: required for production (the built-in sender only
+   reaches your own team, 2 emails an hour). Brevo: SMTP host `smtp-relay.brevo.com`, port 587, your
+   Brevo login and an SMTP key; sender = an address you verified in Brevo. Supabase unlocks template
+   editing only after custom SMTP is saved: then paste the four templates from `supabase/templates/`
+   (subjects in `supabase/config.toml`). Until then Supabase's default emails are sent; they work too,
+   because `/auth/confirm` accepts both the default link and the branded one.
 6. **Authentication → Multi-factor**: enable TOTP.
 7. **Authentication → Providers → Google** (optional): create an OAuth client in Google Cloud
    (*Web application*; authorised redirect URI `https://<ref>.supabase.co/auth/v1/callback`), paste the
