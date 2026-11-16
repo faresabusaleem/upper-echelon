@@ -51,7 +51,9 @@ open to anyone aged 13 or older, built to feel quiet, exclusive and cinematic.
 - **Your data**: a one-click JSON export and real account deletion.
 - **Quality**: designed loading, empty, error, offline, rate-limited and banned states. Responsive from
   360 px, installable as a PWA, AA contrast, reduced motion respected, sitemap, and per-thread and
-  per-member share images.
+  per-member share images. Lighthouse on the live site (mobile, throttled, November 2026): performance
+  92–95, accessibility, best practices and SEO 100 on the landing page, Arena, a trial, Directory, Forum,
+  Leaderboards and the Initiation.
 
 ## Architecture
 
