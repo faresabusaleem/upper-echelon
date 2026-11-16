@@ -399,7 +399,7 @@ isOneToOne: false
                   }
                   ComputedFields: never
                   Insert: {
-                    "body": string,"conversation_id": string,"created_at"?: string,"id"?: never,"removed_at"?: string | null,"sender_id": string
+                    "body": string,"conversation_id": string,"created_at"?: string,"id"?: never,"removed_at"?: string | null,"sender_id"?: string
                   }
                   Update: {
                     "body"?: string,"conversation_id"?: string,"created_at"?: string,"id"?: never,"removed_at"?: string | null,"sender_id"?: string
