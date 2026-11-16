@@ -1,0 +1,37 @@
+name: Database backup
+
+on:
+  schedule:
+    - cron: "0 4 * * 1"
+  workflow_dispatch:
+
+jobs:
+  dump:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check the connection secret
+        id: check
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: |
+          if [ -z "$SUPABASE_DB_URL" ]; then
+            echo "SUPABASE_DB_URL is not set; skipping. See docs/backups.md."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Dump schema, data and auth users
+        if: steps.check.outputs.skip != 'true'
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: |
+          mkdir -p backup
+          npx --yes supabase@latest db dump --db-url "$SUPABASE_DB_URL" -f backup/schema.sql
+          npx --yes supabase@latest db dump --db-url "$SUPABASE_DB_URL" --data-only -f backup/data.sql
+          npx --yes supabase@latest db dump --db-url "$SUPABASE_DB_URL" --data-only --schema auth -f backup/auth.sql
+          tar -czf backup-$(date -u +%Y-%m-%d).tar.gz backup
+      - uses: actions/upload-artifact@v4
+        if: steps.check.outputs.skip != 'true'
+        with:
+          name: database-backup
+          path: backup-*.tar.gz
+          retention-days: 30
