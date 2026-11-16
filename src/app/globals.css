@@ -257,3 +257,12 @@
     }
   }
 }
+
+/* ||Spoilers||: hidden until hovered, focused or tapped. */
+.prose-ue .spoiler {
+  background: var(--color-panel-3);
+  color: transparent;
+  cursor: pointer;
+  transition: color var(--dur-1), background-color var(--dur-1);
+}
+.prose-ue .spoiler:hover, .prose-ue .spoiler:focus { background: var(--color-panel-2); color: var(--color-ink); }
