@@ -3,19 +3,21 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { getViewer } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
-import { ThreadRow, type ThreadListItem } from "@/components/forum/thread-row";
+import { ThreadListHead, ThreadRow, type ThreadListItem } from "@/components/forum/thread-row";
 import { Pager } from "@/components/forum/pager";
+import { Crumbs, HubPage, PageHead } from "@/components/hub/hub-page";
 import { ButtonLink } from "@/components/ui/button";
-import { Empty } from "@/components/ui/empty";
+import { PlusIcon } from "@/components/ui/icons";
+import { Sigil } from "@/components/ui/sigils";
 import { tierInfo } from "@/lib/tiers";
 import { cn } from "@/lib/utils";
 
 type Props = PageProps<"/forum/c/[slug]">;
 const PER_PAGE = 25;
 const SORTS = [
-  ["active", "Active"],
-  ["new", "New"],
-  ["top", "Top"],
+  ["active", "Latest activity"],
+  ["new", "Newest"],
+  ["top", "Most upvoted"],
 ] as const;
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -32,18 +34,32 @@ export default async function CategoryPage({ params, searchParams }: Props) {
   const supabase = await createClient();
   const viewer = await getViewer();
 
-  const { data: cat } = await supabase.from("forum_categories").select("*").eq("slug", slug).maybeSingle();
+  const { data: cat } = await supabase
+    .from("forum_categories")
+    .select("*, section:forum_sections(slug, name)")
+    .eq("slug", slug)
+    .maybeSingle();
   if (!cat) {
-    // The category exists but is above the viewer's tier: explain rather than 404.
+    // The room exists but is above the viewer's tier: explain rather than 404.
     if (slug === "inner-room") {
       return (
-        <div className="mx-auto w-full max-w-3xl px-[var(--gutter)] py-24">
-          <h1 className="font-display text-display-l text-ink">The Inner Room</h1>
-          <p className="mt-6 text-lede text-ink-2">
-            This room opens at the third tier, {tierInfo(3).name}. Play, practise and contribute; the door will notice.
-          </p>
-          <ButtonLink href={viewer ? "/home" : "/join"} className="mt-10">{viewer ? "See your standing" : "Begin your initiation"}</ButtonLink>
-        </div>
+        <HubPage>
+          <Crumbs items={[{ href: "/", label: "Upper Echelon" }, { href: "/forum", label: "Forum" }, { label: "The Inner Sanctum" }]} />
+          <section className="panel relative overflow-hidden px-6 py-12 text-center sm:px-12">
+            <div aria-hidden className="pointer-events-none absolute inset-0 flex items-center justify-center text-gold/[0.07]">
+              <Sigil name="eye" size={420} strokeWidth={0.6} />
+            </div>
+            <Sigil name="eye" size={48} className="mx-auto text-gold" />
+            <h1 className="mt-5 font-display text-[clamp(2rem,4vw,3rem)] leading-tight text-ink">The Inner Sanctum is sealed.</h1>
+            <p className="mx-auto mt-3 max-w-[48ch] text-ink-2">
+              It opens at the third tier, {tierInfo(3).name}. Play the trials, keep your daily rite and write well; the door
+              notices.
+            </p>
+            <ButtonLink href={viewer ? "/home" : "/join"} className="mt-7">
+              {viewer ? "See how close you are" : "Begin your initiation"}
+            </ButtonLink>
+          </section>
+        </HubPage>
       );
     }
     notFound();
@@ -61,47 +77,81 @@ export default async function CategoryPage({ params, searchParams }: Props) {
     .order("id", { ascending: false })
     .range(from, from + PER_PAGE);
   const rows = (threads ?? []) as ThreadListItem[];
-  const canPost = !!viewer?.profile.onboarded_at && (!cat.staff_only || viewer.isModerator || viewer.profile.is_staff);
-  const href = (p: number, s = sort) => `/forum/c/${slug}?${new URLSearchParams({ ...(s !== "active" ? { sort: s } : {}), ...(p > 1 ? { page: String(p) } : {}) })}`;
+  const canPost = !!viewer?.profile.onboarded_at && !viewer.ban && (!cat.staff_only || viewer.isModerator || viewer.profile.is_staff);
+  const href = (p: number, s = sort) =>
+    `/forum/c/${slug}?${new URLSearchParams({ ...(s !== "active" ? { sort: s } : {}), ...(p > 1 ? { page: String(p) } : {}) })}`;
+  const section = cat.section as { slug: string; name: string } | null;
 
   return (
-    <div className="mx-auto w-full max-w-[96rem] px-[var(--gutter)] pb-10 pt-10 sm:pt-14">
-      <nav aria-label="Breadcrumb" className="text-small text-muted">
-        <Link href="/forum" className="hover:text-ink">The Forum</Link>
-      </nav>
-      <div className="mt-3 flex flex-wrap items-end justify-between gap-6">
-        <div>
-          <h1 className="font-display text-display-l text-ink">{cat.name}</h1>
-          <p className="mt-3 max-w-[60ch] text-ink-2">{cat.description}</p>
+    <HubPage>
+      <Crumbs
+        items={[
+          { href: "/", label: "Upper Echelon" },
+          { href: "/forum", label: "Forum" },
+          ...(section ? [{ href: `/forum#sec-${section.slug}`, label: section.name }] : []),
+          { label: cat.name },
+        ]}
+      />
+      <PageHead
+        title={
+          <span className="inline-flex items-center gap-3">
+            <span className="inline-flex size-11 items-center justify-center rounded-xl bg-gold-wash text-gold">
+              <Sigil name={cat.icon} size={24} />
+            </span>
+            {cat.name}
+          </span>
+        }
+        lede={cat.description}
+        actions={
+          canPost ? (
+            <ButtonLink href={`/forum/new?category=${cat.id}`} size="sm">
+              <PlusIcon size={16} /> Post thread
+            </ButtonLink>
+          ) : !viewer ? (
+            <ButtonLink href="/join" variant="secondary" size="sm">
+              Join to write
+            </ButtonLink>
+          ) : cat.staff_only ? (
+            <span className="text-small text-muted">Only staff start threads here.</span>
+          ) : null
+        }
+      />
+
+      <section className="panel">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line px-3 py-2.5">
+          <nav aria-label="Sort" className="flex flex-wrap gap-1">
+            {SORTS.map(([s, label]) => (
+              <Link
+                key={s}
+                href={href(1, s)}
+                aria-current={s === sort ? "page" : undefined}
+                className={cn(
+                  "rounded-full px-3 py-1.5 text-small transition-colors",
+                  s === sort ? "bg-gold text-ground" : "text-ink-2 hover:bg-panel-2 hover:text-ink",
+                )}
+              >
+                {label}
+              </Link>
+            ))}
+          </nav>
+          <span className="pr-1 text-micro text-faint">Page {page}</span>
         </div>
-        {canPost ? (
-          <ButtonLink href={`/forum/new?category=${cat.id}`}>Start a thread</ButtonLink>
-        ) : !viewer ? (
-          <ButtonLink href="/join" variant="secondary">Join to write</ButtonLink>
-        ) : null}
-      </div>
-      <nav aria-label="Sort" className="mt-10 flex gap-2">
-        {SORTS.map(([s, label]) => (
-          <Link
-            key={s}
-            href={href(1, s)}
-            aria-current={s === sort ? "page" : undefined}
-            className={cn("px-3 py-2 text-small", s === sort ? "bg-gold text-ground" : "bg-panel text-ink-2 hover:bg-panel-2 hover:text-ink")}
-          >
-            {label}
-          </Link>
-        ))}
-      </nav>
-      {rows.length > 0 ? (
-        <ul className="mt-4 flex flex-col">
-          {rows.slice(0, PER_PAGE).map((t) => (
-            <ThreadRow key={t.id} t={t} showCategory={false} />
-          ))}
-        </ul>
-      ) : (
-        <Empty className="mt-6" title="No threads yet.">{canPost ? "Begin the first one." : "Nothing has been written here yet."}</Empty>
-      )}
+        <ThreadListHead />
+        {rows.length > 0 ? (
+          <ul className="rows">
+            {rows.slice(0, PER_PAGE).map((t) => (
+              <ThreadRow key={t.id} t={t} showCategory={false} />
+            ))}
+          </ul>
+        ) : (
+          <div className="px-6 py-14 text-center">
+            <Sigil name={cat.icon} size={36} className="mx-auto text-faint" />
+            <p className="mt-3 font-display text-2xl text-ink">No threads yet.</p>
+            <p className="mt-1 text-small text-muted">{canPost ? "Begin the first one." : "Nothing has been written here yet."}</p>
+          </div>
+        )}
+      </section>
       <Pager page={page} hasMore={rows.length > PER_PAGE} href={(p) => href(p)} />
-    </div>
+    </HubPage>
   );
 }

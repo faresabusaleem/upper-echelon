@@ -20,7 +20,7 @@ const REASONS: Array<[string, string]> = [
   ["other", "Something else"],
 ];
 
-export type ReportTarget = "thread" | "post" | "profile" | "message" | "image" | "test_result";
+export type ReportTarget = "thread" | "post" | "profile" | "message" | "image" | "test_result" | "shout";
 
 export function ReportDialog({
   open,

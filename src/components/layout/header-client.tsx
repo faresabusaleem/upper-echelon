@@ -26,7 +26,7 @@ function Count({ n, label }: { n: number; label: string }) {
     <>
       <span
         aria-hidden
-        className="figure absolute -right-0.5 -top-0.5 min-w-[1.15rem] bg-gold px-1 text-center text-[0.6875rem] leading-[1.15rem] text-ground"
+        className="figure absolute -right-0.5 -top-0.5 min-w-[1.15rem] rounded-full bg-ember px-1 text-center text-[0.6875rem] leading-[1.15rem] text-white"
       >
         {n > 99 ? "99+" : n}
       </span>
@@ -68,7 +68,7 @@ export function LiveCounts({ userId, initial }: { userId: string; initial: { not
       <Link
         href="/messages"
         className={cn(
-          "relative inline-flex size-10 items-center justify-center text-ink-2 hover:bg-panel hover:text-ink",
+          "relative inline-flex size-10 items-center justify-center rounded-full text-ink-2 hover:bg-panel hover:text-ink",
           pathname.startsWith("/messages") && "text-ink",
         )}
         aria-label="Messages"
@@ -79,7 +79,7 @@ export function LiveCounts({ userId, initial }: { userId: string; initial: { not
       <Link
         href="/notifications"
         className={cn(
-          "relative inline-flex size-10 items-center justify-center text-ink-2 hover:bg-panel hover:text-ink",
+          "relative inline-flex size-10 items-center justify-center rounded-full text-ink-2 hover:bg-panel hover:text-ink",
           pathname.startsWith("/notifications") && "text-ink",
         )}
         aria-label="Notifications"
@@ -148,7 +148,7 @@ export function HeaderMenu({ member, nav }: { member: Member | null; nav: { href
         aria-expanded={open}
         aria-controls="site-menu"
         className={cn(
-          "inline-flex h-10 items-center gap-2.5 pl-1.5 pr-2 text-ink-2 hover:bg-panel hover:text-ink",
+          "inline-flex h-10 items-center gap-2.5 rounded-full pl-1 pr-2 text-ink-2 hover:bg-panel hover:text-ink",
           !member && "lg:hidden",
         )}
       >
@@ -172,7 +172,7 @@ export function HeaderMenu({ member, nav }: { member: Member | null; nav: { href
         <div
           id="site-menu"
           ref={panelRef}
-          className="fixed inset-x-0 top-[var(--header-h)] z-50 max-h-[calc(100svh-var(--header-h))] overflow-y-auto bg-raised px-[var(--gutter)] pb-8 pt-4 shadow-[0_24px_48px_rgba(0,0,0,0.5)] lg:absolute lg:inset-x-auto lg:right-0 lg:top-12 lg:w-72 lg:px-2 lg:pb-2 lg:pt-2"
+          className="fixed inset-x-0 top-[var(--header-h)] z-50 max-h-[calc(100svh-var(--header-h))] overflow-y-auto border-b border-line bg-raised px-[var(--gutter)] pb-8 pt-4 shadow-[0_24px_48px_rgba(0,0,0,0.5)] lg:absolute lg:inset-x-auto lg:right-0 lg:top-12 lg:w-72 lg:rounded-xl lg:border lg:px-2 lg:pb-2 lg:pt-2"
         >
           <div className="mb-2 flex items-center justify-between lg:hidden">
             <span className="text-small text-muted">Menu</span>
@@ -200,13 +200,13 @@ export function HeaderMenu({ member, nav }: { member: Member | null; nav: { href
           </nav>
           <div className="mt-2 flex flex-col lg:mt-0">
             {links.map((l) => (
-              <Link key={l.href} href={l.href} className="px-3 py-2.5 text-ink-2 hover:bg-panel hover:text-ink">
+              <Link key={l.href} href={l.href} className="rounded-lg px-3 py-2.5 text-ink-2 hover:bg-panel hover:text-ink">
                 {l.label}
               </Link>
             ))}
             {member && (
               <form action="/auth/signout" method="post">
-                <button type="submit" className="w-full px-3 py-2.5 text-left text-ink-2 hover:bg-panel hover:text-ink">
+                <button type="submit" className="w-full rounded-lg px-3 py-2.5 text-left text-ink-2 hover:bg-panel hover:text-ink">
                   Sign out
                 </button>
               </form>
@@ -215,5 +215,38 @@ export function HeaderMenu({ member, nav }: { member: Member | null; nav: { href
         </div>
       )}
     </div>
+  );
+}
+
+/** The main sections as tabs, with the current one underlined in gold. */
+export function NavTabs({ nav, icons }: { nav: { href: string; label: string }[]; icons: Record<string, React.ReactNode> }) {
+  const pathname = usePathname();
+  return (
+    <nav aria-label="Main" className="hidden h-full items-stretch lg:flex">
+      {nav.map((item) => {
+        const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
+        return (
+          <Link
+            key={item.href}
+            href={item.href}
+            aria-current={active ? "page" : undefined}
+            className={cn(
+              "relative inline-flex items-center gap-2 px-3.5 text-[0.9rem] transition-colors duration-150",
+              active ? "text-ink" : "text-ink-2 hover:text-ink",
+            )}
+          >
+            <span className={cn(active ? "text-gold" : "text-muted")}>{icons[item.href]}</span>
+            {item.label}
+            <span
+              aria-hidden
+              className={cn(
+                "absolute inset-x-3 bottom-0 h-0.5 rounded-full bg-gold transition-opacity",
+                active ? "opacity-100" : "opacity-0",
+              )}
+            />
+          </Link>
+        );
+      })}
+    </nav>
   );
 }

@@ -2,8 +2,8 @@ import type { ComponentProps, ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
 const control =
-  "w-full bg-panel text-ink placeholder:text-faint border border-panel-3 px-4 " +
-  "transition-[border-color,background-color] duration-[160ms] hover:border-[#3a3a35] " +
+  "w-full rounded-lg bg-panel text-ink placeholder:text-faint border border-line-2 px-3.5 " +
+  "transition-[border-color,background-color] duration-[160ms] hover:border-[#454550] " +
   "focus:outline-none focus-visible:outline-2 focus-visible:outline-gold focus-visible:outline-offset-0 focus:border-gold-deep " +
   "aria-[invalid=true]:border-danger disabled:opacity-60";
 
@@ -46,7 +46,7 @@ export function Field({
 }
 
 export function Input({ className, ...props }: ComponentProps<"input">) {
-  return <input className={cn(control, "h-12", className)} {...props} />;
+  return <input className={cn(control, "h-11", className)} {...props} />;
 }
 
 export function Textarea({ className, ...props }: ComponentProps<"textarea">) {
@@ -55,7 +55,7 @@ export function Textarea({ className, ...props }: ComponentProps<"textarea">) {
 
 export function Select({ className, children, ...props }: ComponentProps<"select">) {
   return (
-    <select className={cn(control, "h-12 appearance-none pr-10 bg-no-repeat", className)} {...props}>
+    <select className={cn(control, "h-11 appearance-none pr-10 bg-no-repeat", className)} {...props}>
       {children}
     </select>
   );

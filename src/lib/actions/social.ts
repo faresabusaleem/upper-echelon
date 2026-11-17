@@ -63,7 +63,7 @@ export async function muteAction(targetId: string, mute: boolean, path?: string)
 }
 
 const reportSchema = z.object({
-  target_type: z.enum(["thread", "post", "profile", "message", "image", "test_result"]),
+  target_type: z.enum(["thread", "post", "profile", "message", "image", "test_result", "shout"]),
   target_id: z.string().min(1).max(300),
   reason: z.enum(["spam", "harassment", "hate", "sexual", "self_harm", "minor_safety", "violence", "cheating", "impersonation", "other"]),
   details: z.string().max(1000).optional(),

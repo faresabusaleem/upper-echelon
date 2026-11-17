@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { Avatar } from "@/components/ui/avatar";
-import { CheckIcon, LockIcon, PinIcon } from "@/components/ui/icons";
-import { slugify, timeAgo } from "@/lib/utils";
+import { CheckIcon, LockIcon, PinIcon, PollIcon } from "@/components/ui/icons";
+import { THEMES, tierInfo } from "@/lib/tiers";
+import { cn, slugify, timeAgo } from "@/lib/utils";
 
 export type ThreadListItem = {
   id: number;
@@ -21,61 +22,114 @@ export type ThreadListItem = {
   author_username: string | null;
   author_name: string | null;
   author_avatar: string | null;
+  author_tier?: number | null;
+  last_reply_username?: string | null;
   last_reply_name: string | null;
+  last_reply_avatar?: string | null;
+  last_reply_tier?: number | null;
   has_poll: boolean;
+  view_count?: number | null;
 };
 
+const colour = (tier?: number | null) => THEMES[tierInfo(tier ?? 1).theme].accent;
+
+/** One thread in a room's list: who began it, how it is going, and who spoke last. */
 export function ThreadRow({ t, showCategory = true }: { t: ThreadListItem; showCategory?: boolean }) {
+  const url = `/forum/t/${t.id}/${slugify(t.title)}`;
+  const lastName = t.last_reply_name ?? t.author_name;
+  const lastUser = t.last_reply_username ?? (t.last_reply_name ? null : t.author_username);
+  const lastAvatar = t.last_reply_name ? t.last_reply_avatar : t.author_avatar;
+  const lastTier = t.last_reply_name ? t.last_reply_tier : t.author_tier;
   return (
-    <li className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 py-5 sm:grid-cols-[auto_1fr_auto] sm:px-3">
-      <Avatar src={t.author_avatar} name={t.author_name ?? "?"} size={40} className="row-span-2 mt-0.5" />
+    <li
+      className={cn(
+        "grid grid-cols-[2.5rem_minmax(0,1fr)] items-center gap-x-3.5 gap-y-1.5 px-4 py-3 transition-colors hover:bg-panel/60",
+        "md:grid-cols-[2.5rem_minmax(0,1fr)_7.5rem_12.5rem]",
+        t.is_pinned && "bg-gold-wash/30",
+      )}
+    >
+      <Avatar src={t.author_avatar} name={t.author_name ?? "?"} size={40} className="row-span-2 md:row-span-1" />
+
       <div className="min-w-0">
-        <p className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
-          {t.is_pinned && <PinIcon size={16} className="text-gold" aria-label="Pinned" />}
-          {t.is_locked && <LockIcon size={16} className="text-muted" aria-label="Locked" />}
-          <Link href={`/forum/t/${t.id}/${slugify(t.title)}`} className="font-display text-[1.375rem] leading-snug text-ink hover:text-gold-bright">
-            {t.title}
-          </Link>
+        <p className="flex flex-wrap items-center gap-x-2 gap-y-1">
+          {t.is_pinned && <PinIcon size={15} className="text-gold" aria-label="Pinned" />}
+          {t.is_locked && <LockIcon size={15} className="text-muted" aria-label="Locked" />}
+          {t.is_official && <span className="chip bg-gold-wash text-gold-bright">Official</span>}
           {t.solved_post_id && (
-            <span className="inline-flex items-center gap-1 bg-ok-wash px-2 py-0.5 text-micro text-ok">
-              <CheckIcon size={14} /> Solved
+            <span className="chip bg-ok-wash text-ok">
+              <CheckIcon size={12} /> Solved
             </span>
           )}
-          {t.is_official && <span className="bg-gold-wash px-2 py-0.5 text-micro text-gold-bright">Official</span>}
-          {t.has_poll && <span className="bg-panel-2 px-2 py-0.5 text-micro text-ink-2">Poll</span>}
-          {t.removed_at && <span className="bg-danger-wash px-2 py-0.5 text-micro text-danger">Removed</span>}
-        </p>
-        <p className="mt-1 text-small text-muted">
-          {t.author_name ? (
-            <Link href={`/u/${t.author_username}`} className="text-ink-2 hover:text-ink">{t.author_name}</Link>
-          ) : (
-            "A former member"
+          {t.has_poll && (
+            <span className="chip">
+              <PollIcon size={12} /> Poll
+            </span>
           )}
+          {t.removed_at && <span className="chip bg-danger-wash text-danger">Removed</span>}
+          <Link href={url} className="min-w-0 text-[0.98rem] font-medium leading-snug text-ink hover:text-gold-bright">
+            {t.title}
+          </Link>
+        </p>
+        <p className="mt-0.5 flex flex-wrap items-center gap-x-1.5 text-micro text-muted">
+          {t.author_username ? (
+            <Link href={`/u/${t.author_username}`} className="hover:underline" style={{ color: colour(t.author_tier) }}>
+              {t.author_name}
+            </Link>
+          ) : (
+            <span>A former member</span>
+          )}
+          <span aria-hidden>·</span>
+          <time dateTime={t.created_at}>{timeAgo(t.created_at)}</time>
           {showCategory && (
             <>
-              {" in "}
-              <Link href={`/forum/c/${t.category_slug}`} className="text-ink-2 hover:text-ink">{t.category_name}</Link>
+              <span aria-hidden>·</span>
+              <Link href={`/forum/c/${t.category_slug}`} className="hover:text-ink">
+                {t.category_name}
+              </Link>
             </>
           )}
-          {" · "}
-          {t.last_reply_name ? `last reply by ${t.last_reply_name} ${timeAgo(t.last_activity_at)}` : timeAgo(t.created_at)}
+          {t.tags.slice(0, 4).map((tag) => (
+            <Link key={tag} href={`/forum/tags/${tag}`} className="chip px-1.5 py-0 hover:text-ink">
+              #{tag}
+            </Link>
+          ))}
         </p>
-        {t.tags.length > 0 && (
-          <ul className="mt-2 flex flex-wrap gap-1.5" aria-label="Tags">
-            {t.tags.map((tag) => (
-              <li key={tag}>
-                <Link href={`/forum/tags/${tag}`} className="bg-panel px-2 py-0.5 text-micro text-ink-2 hover:bg-panel-2 hover:text-ink">
-                  #{tag}
-                </Link>
-              </li>
-            ))}
-          </ul>
-        )}
       </div>
-      <dl className="col-start-2 flex gap-5 text-small sm:col-start-3 sm:row-span-2 sm:row-start-1 sm:flex-col sm:items-end sm:gap-1">
-        <div className="flex gap-1.5"><dt className="sr-only">Replies</dt><dd className="figure text-ink">{t.reply_count}</dd><span className="text-muted">{t.reply_count === 1 ? "reply" : "replies"}</span></div>
-        <div className="flex gap-1.5"><dt className="sr-only">Upvotes</dt><dd className="figure text-ink">{t.score}</dd><span className="text-muted">up</span></div>
+
+      <dl className="col-start-2 flex gap-4 text-micro md:col-start-3 md:grid md:grid-cols-[auto_auto] md:justify-end md:gap-x-2 md:gap-y-0.5">
+        <dt className="text-muted md:text-right">Replies</dt>
+        <dd className="figure -ml-3 text-ink md:ml-0 md:text-right">{t.reply_count.toLocaleString("en-GB")}</dd>
+        <dt className="text-muted md:text-right">Views</dt>
+        <dd className="figure -ml-3 text-ink md:ml-0 md:text-right">{Number(t.view_count ?? 0).toLocaleString("en-GB")}</dd>
       </dl>
+
+      <div className="col-start-2 hidden min-w-0 items-center justify-end gap-2.5 text-right md:col-start-4 md:flex">
+        <div className="min-w-0">
+          <p className="text-micro text-muted">
+            <time dateTime={t.last_activity_at}>{timeAgo(t.last_activity_at)}</time>
+          </p>
+          {lastUser ? (
+            <Link href={`/u/${lastUser}`} className="block truncate text-small hover:underline" style={{ color: colour(lastTier) }}>
+              {lastName}
+            </Link>
+          ) : (
+            <span className="block truncate text-small text-ink-2">{lastName ?? "A former member"}</span>
+          )}
+        </div>
+        <Avatar src={lastAvatar} name={lastName ?? "?"} size={28} />
+      </div>
     </li>
+  );
+}
+
+/** Column labels above a list of ThreadRows (desktop only). */
+export function ThreadListHead() {
+  return (
+    <div className="hidden grid-cols-[2.5rem_minmax(0,1fr)_7.5rem_12.5rem] gap-x-3.5 border-b border-line px-4 py-2 text-micro uppercase tracking-[0.08em] text-faint md:grid">
+      <span />
+      <span>Thread</span>
+      <span className="text-right">Replies · Views</span>
+      <span className="text-right">Last message</span>
+    </div>
   );
 }

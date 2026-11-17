@@ -70,7 +70,7 @@ export function VoteButton({
           });
         }}
         className={cn(
-          "inline-flex h-9 items-center gap-1.5 px-2.5 text-small transition-colors disabled:cursor-not-allowed disabled:opacity-60",
+          "inline-flex h-8 items-center gap-1.5 rounded-lg px-2.5 text-small transition-colors disabled:cursor-not-allowed disabled:opacity-60",
           state.on ? "bg-gold-wash text-gold-bright" : "bg-panel text-ink-2 hover:bg-panel-2 hover:text-ink",
         )}
       >
@@ -87,7 +87,7 @@ function Tool({ onClick, children, label, danger }: { onClick: () => void; child
     <button
       type="button"
       onClick={onClick}
-      className={cn("inline-flex h-9 items-center gap-1.5 px-2.5 text-small hover:bg-panel", danger ? "text-danger" : "text-ink-2 hover:text-ink")}
+      className={cn("inline-flex h-8 items-center gap-1.5 rounded-lg px-2.5 text-small hover:bg-panel", danger ? "text-danger" : "text-ink-2 hover:text-ink")}
     >
       {children}
       <span>{label}</span>
@@ -171,7 +171,7 @@ export function ThreadControls({
       </div>
       {msg && <Notice tone="error">{msg}</Notice>}
       {mod && (
-        <div className="flex flex-wrap items-end gap-3 bg-gold-wash p-4">
+        <div className="flex flex-wrap items-end gap-3 rounded-xl bg-gold-wash p-4">
           <Button size="sm" variant="secondary" disabled={pending} onClick={() => start(async () => void (await modThreadFlagsAction(thread.id, !thread.is_pinned, null)))}>
             {thread.is_pinned ? "Unpin" : "Pin"}
           </Button>
@@ -205,7 +205,7 @@ export function ThreadControls({
         </div>
       )}
       {editing && (
-        <form action={editAction} className="flex flex-col gap-4 bg-raised p-4">
+        <form action={editAction} className="flex flex-col gap-4 rounded-xl bg-panel p-4">
           <input type="hidden" name="id" value={thread.id} />
           <Field label="Title" htmlFor="edit-title">
             <Input id="edit-title" name="title" defaultValue={thread.title} maxLength={140} />
@@ -314,7 +314,7 @@ export function PostControls({
       </div>
       {pending && <span className="sr-only" aria-live="polite">Working…</span>}
       {editing && (
-        <form action={action} className="flex flex-col gap-3 bg-raised p-4">
+        <form action={action} className="flex flex-col gap-3 rounded-xl bg-panel p-4">
           <input type="hidden" name="id" value={post.id} />
           <Editor id={`edit-post-${post.id}`} label="Edit reply" defaultValue={post.body} minRows={6} />
           {state && !state.ok && <Notice tone="error">{state.message}</Notice>}
@@ -432,7 +432,7 @@ export function PollView({
   const showResults = voted || closed || !isMember;
   const total = Object.values(results).reduce((a, b) => a + b, 0);
   return (
-    <section aria-labelledby={`poll-${poll.id}`} className="bg-raised p-5 sm:p-6">
+    <section aria-labelledby={`poll-${poll.id}`} className="rounded-xl border border-line bg-panel p-5 sm:p-6">
       <h2 id={`poll-${poll.id}`} className="font-display text-xl text-ink">{poll.question}</h2>
       <p className="mt-1 text-small text-muted">
         {total} {total === 1 ? "vote" : "votes"}
@@ -451,7 +451,7 @@ export function PollView({
                     <span>{o}{mine.includes(i) && <span className="ml-2 text-small text-gold">your vote</span>}</span>
                     <span className="figure text-small text-ink-2">{pct}%</span>
                   </div>
-                  <div className="mt-1.5 h-1.5 bg-panel-3"><div className="h-full bg-gold" style={{ width: `${pct}%` }} /></div>
+                  <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-panel-3"><div className="h-full rounded-full bg-gold" style={{ width: `${pct}%` }} /></div>
                 </div>
               ) : (
                 <label className="flex cursor-pointer items-center gap-3 text-ink">
@@ -507,7 +507,7 @@ export function LiveReplies({ threadId, viewerId }: { threadId: number; viewerId
           setFresh(0);
           router.refresh();
         }}
-        className="bg-gold px-5 py-3 font-medium text-ground shadow-[0_12px_32px_rgba(0,0,0,0.5)] hover:bg-gold-bright"
+        className="rounded-full bg-gold px-5 py-3 font-medium text-ground shadow-[0_12px_32px_rgba(0,0,0,0.5)] hover:bg-gold-bright"
       >
         {fresh} new {fresh === 1 ? "reply" : "replies"} · show
       </button>

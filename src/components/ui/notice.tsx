@@ -23,7 +23,7 @@ export function Notice({
   role?: "status" | "alert";
 }) {
   return (
-    <div role={role ?? (tone === "error" ? "alert" : "status")} className={cn("px-4 py-3 text-small", tones[tone], className)}>
+    <div role={role ?? (tone === "error" ? "alert" : "status")} className={cn("rounded-lg px-4 py-3 text-small", tones[tone], className)}>
       {title && <p className="font-medium">{title}</p>}
       {children && <div className={cn(title && "mt-1 opacity-90")}>{children}</div>}
     </div>

@@ -1,24 +1,44 @@
 import Link from "next/link";
 import { notFound, permanentRedirect } from "next/navigation";
+import { after } from "next/server";
 import type { Metadata } from "next";
+import type { ReactNode } from "react";
 import { getViewer } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { excerpt, renderMarkdown } from "@/lib/markdown";
+import { Crumbs, HubPage } from "@/components/hub/hub-page";
+import { tierColor } from "@/components/hub/sidebar";
 import { Avatar } from "@/components/ui/avatar";
 import { ButtonLink } from "@/components/ui/button";
-import { CheckIcon, LockIcon, PinIcon } from "@/components/ui/icons";
+import { CheckIcon, EyeIcon, LockIcon, PinIcon } from "@/components/ui/icons";
 import { Notice } from "@/components/ui/notice";
-import { StaffMark, TierMark } from "@/components/ui/tier-mark";
+import { RankBadge } from "@/components/ui/sigils";
 import { LiveReplies, PollView, PostControls, ReplyForm, ThreadControls, VoteButton } from "@/components/forum/thread-client";
 import { formatDate, slugify, timeAgo } from "@/lib/utils";
 
 type Props = PageProps<"/forum/t/[id]/[[...slug]]">;
 
+const AUTHOR = "id, username, display_name, avatar_url, tier, is_staff, role, message_count, reputation, created_at";
+
+type Author = {
+  id: string;
+  username: string;
+  display_name: string;
+  avatar_url: string | null;
+  tier: number;
+  is_staff: boolean;
+  role: string;
+  message_count: number;
+  reputation: number;
+  created_at: string;
+} | null;
+
 async function loadThread(id: number) {
   const supabase = await createClient();
   const { data } = await supabase
     .from("threads")
-    .select("*, category:forum_categories(id, slug, name, is_advice), author:profiles!threads_author_id_fkey(id, username, display_name, avatar_url, tier, is_staff, role)")
+    .select(`*, category:forum_categories(id, slug, name, is_advice, section:forum_sections(slug, name)), author:profiles!threads_author_id_fkey(${AUTHOR})`)
     .eq("id", id)
     .maybeSingle();
   return data;
@@ -38,6 +58,98 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
+const joined = new Intl.DateTimeFormat("en-GB", { month: "short", year: "numeric", timeZone: "UTC" });
+
+/** The left-hand column of a post: who is speaking, and their standing in the society. */
+function MemberPanel({ a, isOp }: { a: Author; isOp?: boolean }) {
+  if (!a) {
+    return (
+      <aside className="flex items-center gap-3 border-b border-line bg-panel/40 p-4 md:flex-col md:border-b-0 md:border-r md:text-center">
+        <span className="md:hidden"><Avatar name="?" size={40} /></span>
+        <span className="hidden md:block"><Avatar name="?" size={84} /></span>
+        <p className="text-small text-muted">A former member</p>
+      </aside>
+    );
+  }
+  const role = a.role === "admin" ? "Administrator" : a.role === "moderator" ? "Moderator" : null;
+  return (
+    <aside className="flex items-center gap-3 border-b border-line bg-panel/40 p-4 md:flex-col md:items-center md:gap-2 md:border-b-0 md:border-r md:py-5 md:text-center">
+      <Link href={`/u/${a.username}`} className="shrink-0">
+        <span className="md:hidden"><Avatar src={a.avatar_url} name={a.display_name} size={40} /></span>
+        <span className="hidden md:block"><Avatar src={a.avatar_url} name={a.display_name} size={84} /></span>
+      </Link>
+      <div className="flex min-w-0 flex-col gap-1 md:items-center">
+        <Link href={`/u/${a.username}`} className="truncate font-medium hover:underline" style={{ color: tierColor(a.tier) }}>
+          {a.display_name}
+        </Link>
+        <div className="flex flex-wrap items-center gap-1 md:justify-center">
+          <RankBadge tier={a.tier} />
+          {a.is_staff && <span className="chip bg-gold-wash text-gold-bright">Staff</span>}
+          {role && !a.is_staff && <span className="chip bg-ember-wash text-ember">{role}</span>}
+          {isOp && <span className="chip">Author</span>}
+        </div>
+      </div>
+      <dl className="ml-auto hidden w-full grid-cols-[auto_1fr] gap-x-3 gap-y-0.5 pt-2 text-left text-micro md:grid">
+        <dt className="text-muted">Joined</dt>
+        <dd className="text-right text-ink-2">{joined.format(new Date(a.created_at))}</dd>
+        <dt className="text-muted">Messages</dt>
+        <dd className="figure text-right text-ink-2">{a.message_count.toLocaleString("en-GB")}</dd>
+        <dt className="text-muted">Reputation</dt>
+        <dd className="figure text-right text-ink-2">{a.reputation.toLocaleString("en-GB")}</dd>
+      </dl>
+    </aside>
+  );
+}
+
+/** One message on the page: member panel on the left, the words on the right. */
+function PostCard({
+  id,
+  number,
+  author,
+  isOp,
+  createdAt,
+  editedAt,
+  solved,
+  children,
+  footer,
+}: {
+  id: string;
+  number: number;
+  author: Author;
+  isOp?: boolean;
+  createdAt: string;
+  editedAt: string | null;
+  solved?: boolean;
+  children: ReactNode;
+  footer: ReactNode;
+}) {
+  return (
+    <article id={id} className={`panel scroll-mt-24 md:grid md:grid-cols-[11.5rem_minmax(0,1fr)] ${solved ? "ring-1 ring-ok/50" : ""}`}>
+      <MemberPanel a={author} isOp={isOp} />
+      <div className="flex min-w-0 flex-col">
+        <header className="flex items-center justify-between gap-3 border-b border-line px-5 py-2 text-micro text-muted">
+          <span className="flex flex-wrap items-center gap-x-2">
+            <time dateTime={createdAt} title={formatDate(createdAt)}>
+              {timeAgo(createdAt)}
+            </time>
+            {editedAt && <span>· edited {timeAgo(editedAt)}</span>}
+            {solved && (
+              <span className="inline-flex items-center gap-1 text-ok">
+                <CheckIcon size={13} /> The answer
+              </span>
+            )}
+          </span>
+          <a href={`#${id}`} className="figure hover:text-ink">
+            #{number}
+          </a>
+        </header>
+        <div className="min-w-0 px-5 py-4">{children}</div>
+        <footer className="mt-auto flex flex-wrap items-start gap-2 border-t border-line px-4 py-2">{footer}</footer>
+      </div>
+    </article>
+  );
+}
+
 export default async function ThreadPage({ params }: Props) {
   const { id: rawId, slug } = await params;
   const id = Number(rawId);
@@ -46,6 +158,17 @@ export default async function ThreadPage({ params }: Props) {
   if (!t) notFound();
   const expected = slugify(t.title);
   if (slug?.[0] !== expected) permanentRedirect(`/forum/t/${t.id}/${expected}`);
+
+  // Count the view once the page has been sent.
+  if (!t.removed_at) {
+    after(async () => {
+      try {
+        await createAdminClient().rpc("count_thread_view", { tid: t.id });
+      } catch {
+        // A missed view count is harmless.
+      }
+    });
+  }
 
   const viewer = await getViewer();
   const supabase = await createClient();
@@ -56,7 +179,7 @@ export default async function ThreadPage({ params }: Props) {
   const [{ data: posts }, { data: poll }, myVotes, extras, { data: cats }] = await Promise.all([
     supabase
       .from("posts")
-      .select("*, author:profiles!posts_author_id_fkey(id, username, display_name, avatar_url, tier, is_staff, role)")
+      .select(`*, author:profiles!posts_author_id_fkey(${AUTHOR})`)
       .eq("thread_id", id)
       .order("created_at")
       .limit(500),
@@ -99,154 +222,164 @@ export default async function ThreadPage({ params }: Props) {
   const replies = await Promise.all((posts ?? []).map(async (p) => ({ ...p, html: await renderMarkdown(p.body) })));
   const solution = replies.find((r) => r.id === t.solved_post_id);
   const canMarkSolution = !!t.category?.is_advice && (isAuthor || isModerator);
-
-  const authorName = t.author?.display_name ?? "A former member";
+  const section = (t.category?.section ?? null) as { slug: string; name: string } | null;
+  const opAuthor = t.author as Author;
 
   return (
-    <article className="mx-auto w-full max-w-5xl px-[var(--gutter)] pb-10 pt-10 sm:pt-14">
-      <nav aria-label="Breadcrumb" className="text-small text-muted">
-        <Link href="/forum" className="hover:text-ink">The Forum</Link>
-        <span aria-hidden> / </span>
-        <Link href={`/forum/c/${t.category?.slug}`} className="hover:text-ink">{t.category?.name}</Link>
-      </nav>
-      <header className="mt-4">
-        <h1 className="font-display text-display-m text-ink">{t.title}</h1>
-        <p className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-2 text-small text-muted">
-          {t.is_pinned && <span className="inline-flex items-center gap-1 text-gold"><PinIcon size={15} /> Pinned</span>}
-          {t.is_locked && <span className="inline-flex items-center gap-1"><LockIcon size={15} /> Locked</span>}
-          {t.solved_post_id && <span className="inline-flex items-center gap-1 text-ok"><CheckIcon size={15} /> Solved</span>}
-          {t.is_official && <span className="bg-gold-wash px-2 py-0.5 text-gold-bright">Official · Upper Echelon staff</span>}
-          <span>Started {formatDate(t.created_at)}</span>
-          {t.edited_at && <span>· edited {timeAgo(t.edited_at)}</span>}
+    <HubPage>
+      <Crumbs
+        items={[
+          { href: "/", label: "Upper Echelon" },
+          { href: "/forum", label: "Forum" },
+          ...(section ? [{ href: `/forum#sec-${section.slug}`, label: section.name }] : []),
+          { href: `/forum/c/${t.category?.slug}`, label: t.category?.name ?? "Room" },
+        ]}
+      />
+
+      <header className="flex flex-col gap-2">
+        <h1 className="font-display text-[clamp(1.8rem,3vw,2.5rem)] leading-[1.08] text-ink">{t.title}</h1>
+        <p className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-small text-muted">
+          {t.is_pinned && <span className="inline-flex items-center gap-1 text-gold"><PinIcon size={14} /> Pinned</span>}
+          {t.is_locked && <span className="inline-flex items-center gap-1"><LockIcon size={14} /> Locked</span>}
+          {t.solved_post_id && <span className="inline-flex items-center gap-1 text-ok"><CheckIcon size={14} /> Solved</span>}
+          {t.is_official && <span className="chip bg-gold-wash text-gold-bright">Official · Upper Echelon staff</span>}
+          <span>
+            Started by{" "}
+            {opAuthor ? (
+              <Link href={`/u/${opAuthor.username}`} style={{ color: tierColor(opAuthor.tier) }} className="hover:underline">
+                {opAuthor.display_name}
+              </Link>
+            ) : (
+              "a former member"
+            )}{" "}
+            · {formatDate(t.created_at)}
+          </span>
+          <span className="inline-flex items-center gap-1"><EyeIcon size={14} /> {(t.view_count + 1).toLocaleString("en-GB")}</span>
+          <span>{t.reply_count} {t.reply_count === 1 ? "reply" : "replies"}</span>
         </p>
         {t.tags.length > 0 && (
-          <ul className="mt-3 flex flex-wrap gap-1.5">
+          <ul className="flex flex-wrap gap-1.5">
             {t.tags.map((tag) => (
-              <li key={tag}><Link href={`/forum/tags/${tag}`} className="bg-panel px-2 py-0.5 text-micro text-ink-2 hover:text-ink">#{tag}</Link></li>
+              <li key={tag}>
+                <Link href={`/forum/tags/${tag}`} className="chip hover:text-ink">#{tag}</Link>
+              </li>
             ))}
           </ul>
         )}
       </header>
 
       {t.removed_at && (
-        <Notice tone="error" className="mt-8" title="This thread was removed by a moderator.">
+        <Notice tone="error" title="This thread was removed by a moderator.">
           {t.removed_reason ? `Reason: ${t.removed_reason}. ` : ""}Only you and the moderators can see it.
         </Notice>
       )}
 
-      <section aria-label="Opening post" className="mt-10 grid grid-cols-[auto_1fr] gap-x-5">
-        <Avatar src={t.author?.avatar_url} name={authorName} size={44} />
-        <div className="min-w-0">
-          <p className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
-            {t.author ? <Link href={`/u/${t.author.username}`} className="text-ink hover:text-gold-bright">{authorName}</Link> : <span className="text-ink-2">{authorName}</span>}
-            {t.author && <TierMark tier={t.author.tier} />}
-            {t.author?.is_staff && <StaffMark />}
-          </p>
-          <div className="prose-ue mt-4" dangerouslySetInnerHTML={{ __html: bodyHtml }} />
-          {poll && (
-            <div className="mt-8 max-w-xl">
-              <PollView poll={poll} results={pollResults} mine={myPoll} threadId={t.id} isMember={isMember} closed={!!poll.closes_at && new Date(poll.closes_at).getTime() < now} />
-            </div>
-          )}
-          <div className="mt-6 flex flex-wrap items-start gap-3">
-            <VoteButton
-              key={`t-${t.score}-${votedThread}`}
-              kind="thread"
-              id={t.id}
-              threadId={t.id}
-              count={t.score}
-              on={votedThread}
-              disabled={!isMember || isAuthor}
-              disabledReason={isAuthor ? "You cannot vote for your own writing." : "Sign in to vote."}
-            />
-            <ThreadControls
-              thread={{ id: t.id, title: t.title, body: t.body, tags: t.tags, is_pinned: t.is_pinned, is_locked: t.is_locked, removed_at: t.removed_at, category_id: t.category_id, reply_count: t.reply_count }}
-              isMember={isMember}
-              isAuthor={isAuthor}
-              isModerator={isModerator}
-              bookmarked={bookmarked}
-              following={following}
-              categories={cats ?? []}
-            />
-          </div>
-        </div>
-      </section>
-
       {solution && (
-        <a href={`#r${solution.id}`} className="mt-10 block bg-ok-wash px-5 py-4 text-ok hover:brightness-110">
+        <a href={`#r${solution.id}`} className="block rounded-[14px] border border-ok/30 bg-ok-wash px-5 py-4 text-ok hover:brightness-110">
           <span className="inline-flex items-center gap-2 font-medium"><CheckIcon size={16} /> Answer by {solution.author?.display_name ?? "a former member"}</span>
           <span className="mt-1 block text-small text-ink-2">{excerpt(solution.body, 180)}</span>
         </a>
       )}
 
-      <section aria-labelledby="replies-h" className="mt-16">
-        <h2 id="replies-h" className="font-display text-display-s text-ink">
-          {replies.length} {replies.length === 1 ? "reply" : "replies"}
-        </h2>
-        <ol className="mt-6 flex flex-col">
-          {replies.map((p) => {
-            const name = p.author?.display_name ?? "A former member";
-            const mine = viewer?.id === p.author_id;
-            return (
-              <li
-                key={p.id}
-                id={`r${p.id}`}
-                className={`grid scroll-mt-28 grid-cols-[auto_1fr] gap-x-5 py-8 ${p.id === t.solved_post_id ? "bg-ok-wash/40 px-3" : ""}`}
-              >
-                <Avatar src={p.author?.avatar_url} name={name} size={40} />
-                <div className="min-w-0">
-                  <p className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-small">
-                    {p.author ? <Link href={`/u/${p.author.username}`} className="text-[1rem] text-ink hover:text-gold-bright">{name}</Link> : <span className="text-ink-2">{name}</span>}
-                    {p.author && <TierMark tier={p.author.tier} />}
-                    {p.author?.is_staff && <StaffMark />}
-                    {p.author_id === t.author_id && p.author && <span className="text-muted">author</span>}
-                    <a href={`#r${p.id}`} className="text-muted hover:text-ink">{timeAgo(p.created_at)}</a>
-                    {p.edited_at && <span className="text-muted">· edited</span>}
-                    {p.id === t.solved_post_id && <span className="inline-flex items-center gap-1 text-ok"><CheckIcon size={14} /> The answer</span>}
-                  </p>
-                  {p.removed_at && (
-                    <Notice tone="error" className="mt-3">Removed by a moderator{p.removed_reason ? `: ${p.removed_reason}` : ""}. Visible only to you and the moderators.</Notice>
-                  )}
-                  <div className="prose-ue mt-3" dangerouslySetInnerHTML={{ __html: p.html }} />
-                  <div className="mt-4 flex flex-wrap items-start gap-3">
-                    <VoteButton
-                      key={`p-${p.id}-${p.score}-${votedPosts.has(p.id)}`}
-                      kind="post"
-                      id={p.id}
-                      threadId={t.id}
-                      count={p.score}
-                      on={votedPosts.has(p.id)}
-                      disabled={!isMember || mine}
-                      disabledReason={mine ? "You cannot vote for your own writing." : "Sign in to vote."}
-                    />
-                    <PostControls
-                      post={{ id: p.id, body: p.body, removed_at: p.removed_at, edited_at: p.edited_at }}
-                      threadId={t.id}
-                      authorName={name}
-                      authorUsername={(p.author?.username as string | undefined) ?? null}
-                      isMember={isMember}
-                      isAuthor={mine}
-                      isModerator={isModerator}
-                      canMarkSolution={canMarkSolution && !mine}
-                      isSolution={p.id === t.solved_post_id}
-                      locked={t.is_locked}
-                    />
-                  </div>
-                </div>
-              </li>
-            );
-          })}
-        </ol>
-        <LiveReplies threadId={t.id} viewerId={viewer?.id ?? null} />
-      </section>
+      <div className="flex flex-col gap-4">
+        <PostCard
+          id="op"
+          number={1}
+          author={opAuthor}
+          isOp
+          createdAt={t.created_at}
+          editedAt={t.edited_at}
+          footer={
+            <>
+              <VoteButton
+                key={`t-${t.score}-${votedThread}`}
+                kind="thread"
+                id={t.id}
+                threadId={t.id}
+                count={t.score}
+                on={votedThread}
+                disabled={!isMember || isAuthor}
+                disabledReason={isAuthor ? "You cannot vote for your own writing." : "Sign in to vote."}
+              />
+              <ThreadControls
+                thread={{ id: t.id, title: t.title, body: t.body, tags: t.tags, is_pinned: t.is_pinned, is_locked: t.is_locked, removed_at: t.removed_at, category_id: t.category_id, reply_count: t.reply_count }}
+                isMember={isMember}
+                isAuthor={isAuthor}
+                isModerator={isModerator}
+                bookmarked={bookmarked}
+                following={following}
+                categories={cats ?? []}
+              />
+            </>
+          }
+        >
+          <div className="prose-ue max-w-none" dangerouslySetInnerHTML={{ __html: bodyHtml }} />
+          {poll && (
+            <div className="mt-6 max-w-xl">
+              <PollView poll={poll} results={pollResults} mine={myPoll} threadId={t.id} isMember={isMember} closed={!!poll.closes_at && new Date(poll.closes_at).getTime() < now} />
+            </div>
+          )}
+        </PostCard>
 
-      <section aria-labelledby="reply-h" className="mt-12">
-        <h2 id="reply-h" className="font-display text-display-s text-ink">Your reply</h2>
-        <div className="mt-5">
+        {replies.map((p, i) => {
+          const name = p.author?.display_name ?? "A former member";
+          const mine = viewer?.id === p.author_id;
+          return (
+            <PostCard
+              key={p.id}
+              id={`r${p.id}`}
+              number={i + 2}
+              author={p.author as Author}
+              isOp={p.author_id === t.author_id}
+              createdAt={p.created_at}
+              editedAt={p.edited_at}
+              solved={p.id === t.solved_post_id}
+              footer={
+                <>
+                  <VoteButton
+                    key={`p-${p.id}-${p.score}-${votedPosts.has(p.id)}`}
+                    kind="post"
+                    id={p.id}
+                    threadId={t.id}
+                    count={p.score}
+                    on={votedPosts.has(p.id)}
+                    disabled={!isMember || mine}
+                    disabledReason={mine ? "You cannot vote for your own writing." : "Sign in to vote."}
+                  />
+                  <PostControls
+                    post={{ id: p.id, body: p.body, removed_at: p.removed_at, edited_at: p.edited_at }}
+                    threadId={t.id}
+                    authorName={name}
+                    authorUsername={(p.author?.username as string | undefined) ?? null}
+                    isMember={isMember}
+                    isAuthor={mine}
+                    isModerator={isModerator}
+                    canMarkSolution={canMarkSolution && !mine}
+                    isSolution={p.id === t.solved_post_id}
+                    locked={t.is_locked}
+                  />
+                </>
+              }
+            >
+              {p.removed_at && (
+                <Notice tone="error" className="mb-3">
+                  Removed by a moderator{p.removed_reason ? `: ${p.removed_reason}` : ""}. Visible only to you and the moderators.
+                </Notice>
+              )}
+              <div className="prose-ue max-w-none" dangerouslySetInnerHTML={{ __html: p.html }} />
+            </PostCard>
+          );
+        })}
+        <LiveReplies threadId={t.id} viewerId={viewer?.id ?? null} />
+      </div>
+
+      <section aria-labelledby="reply-h" className="panel">
+        <h2 id="reply-h" className="panel-head">Your reply</h2>
+        <div className="p-4 sm:p-5">
           {t.is_locked && !isModerator ? (
             <Notice title="This thread is locked.">No new replies can be added.</Notice>
           ) : t.removed_at ? null : !viewer ? (
-            <div className="flex flex-wrap items-center gap-4 bg-raised px-5 py-5">
+            <div className="flex flex-wrap items-center gap-4">
               <p className="text-ink-2">Members can reply, vote and follow threads.</p>
               <ButtonLink href="/join" size="sm">Begin your initiation</ButtonLink>
               <Link href={`/login?next=/forum/t/${t.id}`} className="text-small text-ink underline">Sign in</Link>
@@ -260,6 +393,6 @@ export default async function ThreadPage({ params }: Props) {
           )}
         </div>
       </section>
-    </article>
+    </HubPage>
   );
 }

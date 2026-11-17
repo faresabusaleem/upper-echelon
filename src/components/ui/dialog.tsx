@@ -31,7 +31,7 @@ export function Dialog({
       onClick={(e) => {
         if (e.target === ref.current) onClose();
       }}
-      className={`m-auto w-[calc(100%-2rem)] ${wide ? "max-w-2xl" : "max-w-lg"} bg-raised p-0 text-ink shadow-[0_32px_80px_rgba(0,0,0,0.6)] backdrop:bg-black/70`}
+      className={`m-auto w-[calc(100%-2rem)] ${wide ? "max-w-2xl" : "max-w-lg"} rounded-2xl border border-line bg-raised p-0 text-ink shadow-[0_32px_80px_rgba(0,0,0,0.6)] backdrop:bg-black/70`}
       aria-labelledby="dialog-title"
     >
       <div className="flex items-start justify-between gap-6 px-6 pt-6">
