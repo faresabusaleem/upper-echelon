@@ -20,10 +20,15 @@ type ServerEnv = z.infer<typeof serverSchema>;
 type Key = keyof ServerEnv;
 const cache = new Map<Key, unknown>();
 
+/** Names other tools use for the same value (the Supabase–Vercel integration may sync the older one). */
+const ALIASES: Partial<Record<Key, string>> = { SUPABASE_SECRET_KEY: "SUPABASE_SERVICE_ROLE_KEY" };
+
 function read(key: Key): unknown {
   if (!cache.has(key)) {
+    const alias = ALIASES[key];
     // Empty strings count as unset, so defaults apply when a variable exists but is blank.
-    cache.set(key, serverSchema.shape[key].parse(process.env[key] || undefined));
+    const raw = process.env[key] || (alias ? process.env[alias] : undefined) || undefined;
+    cache.set(key, serverSchema.shape[key].parse(raw));
   }
   return cache.get(key);
 }
