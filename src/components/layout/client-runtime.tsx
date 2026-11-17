@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect } from "react";
-import { usePathname } from "next/navigation";
 import { useOffline } from "next/offline";
 
 /**
@@ -12,7 +11,6 @@ import { useOffline } from "next/offline";
  * - shows a calm banner while offline
  */
 export function ClientRuntime() {
-  const pathname = usePathname();
   const offline = useOffline();
 
   useEffect(() => {
@@ -22,10 +20,12 @@ export function ClientRuntime() {
     }
   }, []);
 
+  // Pages stream in after their loading state, and filters swap content without a URL change, so
+  // [data-reveal] elements are picked up whenever they are added to the document, not once per path.
   useEffect(() => {
-    const els = Array.from(document.querySelectorAll<HTMLElement>("[data-reveal]:not(.is-revealed)"));
-    if (!("IntersectionObserver" in window)) {
-      els.forEach((el) => el.classList.add("is-revealed"));
+    const pending = (root: ParentNode) => Array.from(root.querySelectorAll<HTMLElement>("[data-reveal]:not(.is-revealed)"));
+    if (!("IntersectionObserver" in window) || !("MutationObserver" in window)) {
+      pending(document).forEach((el) => el.classList.add("is-revealed"));
       return;
     }
     const io = new IntersectionObserver(
@@ -39,9 +39,23 @@ export function ClientRuntime() {
       },
       { rootMargin: "0px 0px -8% 0px", threshold: 0.08 },
     );
-    els.forEach((el) => io.observe(el));
-    return () => io.disconnect();
-  }, [pathname]);
+    const watch = (root: ParentNode) => pending(root).forEach((el) => io.observe(el));
+    watch(document);
+    const mo = new MutationObserver((records) => {
+      for (const record of records) {
+        for (const node of record.addedNodes) {
+          if (!(node instanceof HTMLElement)) continue;
+          if (node.matches("[data-reveal]:not(.is-revealed)")) io.observe(node);
+          watch(node);
+        }
+      }
+    });
+    mo.observe(document.body, { childList: true, subtree: true });
+    return () => {
+      mo.disconnect();
+      io.disconnect();
+    };
+  }, []);
 
   if (!offline) return null;
   return (

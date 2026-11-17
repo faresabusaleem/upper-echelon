@@ -162,6 +162,9 @@
   transition-delay: calc(var(--reveal-i, 0) * 80ms);
 }
 .js [data-reveal].is-revealed { opacity: 1; transform: none; }
+/* Failsafe: whatever happens to the observer, nothing stays hidden for more than a moment. */
+.js [data-reveal]:not(.is-revealed) { animation: reveal-failsafe 1ms linear 2.5s forwards; }
+@keyframes reveal-failsafe { to { opacity: 1; transform: none; } }
 
 /* Reduced motion: keep content, drop travel. Honoured from the OS and from the member setting. */
 @media (prefers-reduced-motion: reduce) {
