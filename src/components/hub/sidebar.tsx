@@ -49,7 +49,7 @@ export async function HubSidebar() {
   const online = (onlineRaw ?? { members: 0, guests: 0, list: [] }) as unknown as Online;
   const stats = (statsRaw ?? { threads: 0, messages: 0, members: 0, newest: null }) as unknown as Stats;
   const hiddenIds = hidden ? [...(hidden[0].data ?? []).map((b) => b.blocked_id), ...(hidden[1].data ?? []).map((m) => m.muted_id)] : [];
-  const rite = GAMES[dailyGame()];
+  const daily = GAMES[dailyGame()];
   const canSpeak = !!viewer?.profile.onboarded_at && !viewer.ban && !viewer.mute;
 
   return (
@@ -76,17 +76,17 @@ export async function HubSidebar() {
         hiddenIds={hiddenIds}
       />
 
-      <section className="panel" aria-labelledby="rite-h">
-        <h2 id="rite-h" className="panel-head">
-          Today&rsquo;s rite <small>resets 00:00 UTC</small>
+      <section className="panel" aria-labelledby="daily-h">
+        <h2 id="daily-h" className="panel-head">
+          Daily challenge <small>resets 00:00 UTC</small>
         </h2>
-        <Link href={`/arena/${rite.slug}`} className="group flex items-center gap-3 px-4 py-3.5 hover:bg-panel">
+        <Link href={`/arena/${daily.slug}`} className="group flex items-center gap-3 px-4 py-3.5 hover:bg-panel">
           <span className="inline-flex size-10 items-center justify-center rounded-xl bg-gold-wash text-gold">
             <Sigil name="candle" size={22} />
           </span>
           <span className="min-w-0 flex-1">
-            <span className="block text-ink group-hover:text-gold-bright">{rite.name}</span>
-            <span className="block truncate text-micro text-muted">{rite.line}</span>
+            <span className="block text-ink group-hover:text-gold-bright">{daily.name}</span>
+            <span className="block truncate text-micro text-muted">{daily.line}</span>
           </span>
           <span aria-hidden className="text-gold">→</span>
         </Link>

@@ -68,7 +68,7 @@ export default async function GamePage({ params }: PageProps<"/arena/[game]">) {
           <Sigil name={theme.sigil} size={24} />
         </span>
         <h1 className="font-display text-[clamp(1.9rem,3.2vw,2.6rem)] leading-none text-ink">{g.name}</h1>
-        {isDaily && <span className="chip bg-gold text-ground">Today&rsquo;s rite</span>}
+        {isDaily && <span className="chip bg-gold text-ground">Daily challenge</span>}
         <p className="w-full max-w-[70ch] text-ink-2">{g.measures}</p>
       </div>
 

@@ -50,7 +50,7 @@ export function TrialCard({
         <span className="inline-flex size-10 items-center justify-center rounded-xl" style={{ background: `${t.tint}22`, color: t.tint }}>
           <Sigil name={t.sigil} size={22} />
         </span>
-        {daily && <span className="chip bg-gold text-ground">Today&rsquo;s rite</span>}
+        {daily && <span className="chip bg-gold text-ground">Daily challenge</span>}
       </span>
 
       <span className="mt-auto block pt-5">

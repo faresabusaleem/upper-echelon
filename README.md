@@ -30,7 +30,7 @@ open to anyone aged 13 or older, built to feel quiet, exclusive and cinematic.
   shake for a lost life, sparks for a level or a personal best, and a one-key replay. Timed with
   `performance.now()` on mouse, touch or keyboard. Members get history charts, personal bests, a
   percentile against all members, and global, weekly, daily and per-tier leaderboards. Results are
-  recomputed and checked on the server (anti-cheat), and a daily rite keeps streaks.
+  recomputed and checked on the server (anti-cheat), and a daily challenge keeps streaks.
 - **The Directory**: 16 tests, from Mensa Norway to the high-range tests by other authors (Neurolus,
   NUMERUS, LDA-SWaN, THETIS, Jonathan Wai's SLSE forms and more). Facts come from each official page,
   and the site hosts no questions. Members log results with an optional screenshot as proof, marked
@@ -43,7 +43,7 @@ open to anyone aged 13 or older, built to feel quiet, exclusive and cinematic.
   reputation, views, bookmarks, followed threads, tags, sorting, full-text search, live replies, pinned
   and locked threads, and accepted answers.
 - **The hub**: every main page carries a sidebar with **the Circle** (a live, moderated chat for the
-  whole society), who is present now (members can hide themselves), today's rite, the latest threads
+  whole society), who is present now (members can hide themselves), the daily challenge, the latest threads
   and the society's statistics. A Members page lists who is here, the highest Echelon, the most
   messages and the newest arrivals.
 - **Ranks**: six tiers from Initiate to Laureate driven by a documented 0–1,000 score, plus 17 marks,

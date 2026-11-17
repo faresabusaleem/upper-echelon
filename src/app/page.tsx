@@ -87,13 +87,13 @@ function Banner({ member }: { member: { name: string; tier: number; score: numbe
           </h1>
           <p className="mt-3 max-w-[54ch] text-ink-2">
             {member
-              ? "Your rite awaits, the Circle is talking, and the halls have news. Every trial you play and every word you write moves you up."
+              ? "Your daily challenge awaits, the Circle is talking, and the halls have news. Every trial you play and every word you write moves you up."
               : "Eight trials of the mind, a directory of renowned tests, and halls where arguments are judged on their merit. Rise through six ranks; open the Inner Sanctum."}
           </p>
           <div className="mt-5 flex flex-wrap items-center gap-3">
             {member ? (
               <>
-                <ButtonLink href="/arena">Play today&rsquo;s rite</ButtonLink>
+                <ButtonLink href="/arena">Play the daily challenge</ButtonLink>
                 <ButtonLink href="/home" variant="secondary">Your desk</ButtonLink>
               </>
             ) : (

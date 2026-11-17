@@ -148,7 +148,7 @@ function SoundToggle() {
 }
 
 /**
- * The heads-up display along the top of the stage: the rite (level), any other counters, the
+ * The heads-up display along the top of the stage: the level, any other counters, the
  * remaining lives, and the sound switch.
  */
 export function Hud({

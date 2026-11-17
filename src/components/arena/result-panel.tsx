@@ -114,7 +114,7 @@ export function ResultPanel({
       )}
       {outcome.saved && (
         <p className="text-small text-white/65">
-          Saved to your record{outcome.isDaily ? " · today’s rite complete" : ""}
+          Saved to your record{outcome.isDaily ? " · daily challenge complete" : ""}
           {outcome.streak > 0 ? ` · ${outcome.streak}-day streak` : ""}.
         </p>
       )}

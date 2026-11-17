@@ -56,11 +56,11 @@ export default async function ArenaPage() {
         </span>
         <span className="min-w-0 flex-1">
           <span className="block text-micro uppercase tracking-[0.2em]" style={{ color: t.tint }}>
-            Today&rsquo;s rite
+            Daily challenge
           </span>
           <span className="mt-1 block font-display text-[clamp(1.7rem,3vw,2.3rem)] leading-tight text-white">{daily.name}</span>
           <span className="mt-1 block text-small text-white/65">
-            {doneToday ? "Kept for today. A new rite at midnight UTC." : "One trial, the same for every member. Keep it daily to keep your streak alive."}
+            {doneToday ? "Done for today. A new challenge at midnight UTC." : "One trial, the same for every member. Keep it daily to keep your streak alive."}
           </span>
         </span>
         <span className="flex items-center gap-4">
@@ -72,7 +72,7 @@ export default async function ArenaPage() {
             </span>
           )}
           <span className="rounded-2xl px-6 py-3 font-semibold transition-[filter] group-hover:brightness-110" style={{ background: t.tint, color: t.stage }}>
-            {doneToday ? "Play again" : "Begin the rite"}
+            {doneToday ? "Play again" : "Play it"}
           </span>
         </span>
       </Link>

@@ -52,7 +52,7 @@ export default async function CategoryPage({ params, searchParams }: Props) {
             <Sigil name="eye" size={48} className="mx-auto text-gold" />
             <h1 className="mt-5 font-display text-[clamp(2rem,4vw,3rem)] leading-tight text-ink">The Inner Sanctum is sealed.</h1>
             <p className="mx-auto mt-3 max-w-[48ch] text-ink-2">
-              It opens at the third tier, {tierInfo(3).name}. Play the trials, keep your daily rite and write well; the door
+              It opens at the third tier, {tierInfo(3).name}. Play the trials, keep up your daily challenge and write well; the door
               notices.
             </p>
             <ButtonLink href={viewer ? "/home" : "/join"} className="mt-7">
