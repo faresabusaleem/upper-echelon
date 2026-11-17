@@ -15,9 +15,9 @@ type Vis = "everyone" | "followers" | "only_me";
 export function PrivacyForm({
   values,
 }: {
-  values: { game_stats_visibility: Vis; test_results_visibility: Vis; activity_visibility: Vis; followers_visibility: Vis; dm_policy: string };
+  values: { game_stats_visibility: Vis; test_results_visibility: Vis; activity_visibility: Vis; followers_visibility: Vis; dm_policy: string; show_online: boolean };
 }) {
-  const rows: Array<[keyof typeof values, string, string]> = [
+  const rows: Array<["game_stats_visibility" | "test_results_visibility" | "activity_visibility" | "followers_visibility", string, string]> = [
     ["game_stats_visibility", "Arena results", "Your bests, history and percentiles. Members who hide them do not appear on leaderboards."],
     ["test_results_visibility", "Logged test results", "Results you log from the Directory. Individual results can also be hidden."],
     ["activity_visibility", "Activity", "Your recent threads, replies and marks on your profile."],
@@ -45,6 +45,10 @@ export function PrivacyForm({
           <option value="no_one">No one</option>
         </Select>
       </Field>
+      <div className="flex flex-col gap-1.5">
+        <Checkbox name="show_online" defaultChecked={values.show_online} label="Show me in “Present now” when I am on the site" />
+        <p className="pl-7 text-micro text-muted">When off, you are still counted among those present, but your name is not listed.</p>
+      </div>
       <div>
         <SubmitButton pendingLabel="Saving…">Save privacy settings</SubmitButton>
       </div>

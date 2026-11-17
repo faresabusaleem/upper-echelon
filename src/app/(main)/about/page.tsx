@@ -41,7 +41,7 @@ export default function AboutPage() {
       <h2>The Forum</h2>
       <p>
         Rooms for psychometrics, test discussions, puzzles, mathematics, philosophy, science, books, advice,
-        introductions and everything else, plus the Inner Room for members of the third tier and above. The only seeded
+        introductions and everything else, plus the Inner Sanctum for members of the third tier and above. The only seeded
         posts are a few welcome threads from the official staff account, clearly labelled as such.
       </p>
 
@@ -80,7 +80,7 @@ export default function AboutPage() {
               <td>{t.threshold}</td>
               <td>
                 {t.theme.charAt(0).toUpperCase() + t.theme.slice(1)} profile theme
-                {t.tier === 3 ? "; the Inner Room" : ""}
+                {t.tier === 3 ? "; the Inner Sanctum" : ""}
               </td>
             </tr>
           ))}

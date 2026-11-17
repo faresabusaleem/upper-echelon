@@ -145,3 +145,17 @@ Skeleton (slow tone pulse, never shimmer), Progress, Dialog (native `<dialog>`),
 1200×630: the site (`/opengraph-image`), each thread (`/api/og/thread/[id]`) and each member
 (`/api/og/member/[username]`): the title in Cormorant on the left, the Plate on a raised panel on the
 right, one line of gold.
+
+## 7. The hub (November 2026 remodel)
+
+The site now behaves like a society's meeting hall rather than a brochure:
+
+- **Palette**: soft charcoal ground (`#0f0f12`) with layered panels, hairline rules (`--color-line`) to
+  organise dense lists, candlelight gold as the one accent, and ember (`#c8573f`) for losses and alerts.
+- **Shape**: rounded panels (14 px), pills for chips and filters, rounded buttons. The old square
+  corners remain only in archive imagery.
+- **Sigils**: one line drawing per room and trial (`src/components/ui/sigils.tsx`), the candle flame for
+  lives, and rank badges coloured by tier theme.
+- **The Arena**: each trial has its own colour (`src/lib/games/themes.ts`) and synthesised sounds
+  (`src/lib/games/sound.ts`, Web Audio, no files). Effects respect reduced motion; flashes are single and
+  low in intensity. Reaction Time's signal is silent so it still measures visual reaction.

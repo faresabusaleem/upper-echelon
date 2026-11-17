@@ -112,6 +112,8 @@ const privacySchema = z.object({
   activity_visibility: visibility,
   followers_visibility: visibility,
   dm_policy: z.enum(["everyone", "following", "no_one"]),
+  // A checkbox: present ("on") when ticked, absent when not.
+  show_online: z.preprocess((v) => v === "on", z.boolean()),
 });
 
 export async function savePrivacyAction(_: SettingsState, formData: FormData): Promise<SettingsState> {

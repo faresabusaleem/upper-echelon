@@ -61,7 +61,7 @@ A practice day is a UTC day with at least one saved (unflagged) result. Recomput
 |---|---|---|---|
 | I | Initiate | 0 | Pewter profile theme |
 | II | Associate | 100 | Bronze theme |
-| III | Fellow | 250 | Silver theme, **the Inner Room** |
+| III | Fellow | 250 | Silver theme, **the Inner Sanctum** |
 | IV | Savant | 450 | Gold theme |
 | V | Luminary | 650 | Platinum theme |
 | VI | Laureate | 850 | Obsidian theme |

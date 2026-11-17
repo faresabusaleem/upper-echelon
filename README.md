@@ -25,21 +25,29 @@ open to anyone aged 13 or older, built to feel quiet, exclusive and cinematic.
 ## What's inside
 
 - **The Arena**: Reaction Time, Sequence Memory, Aim Trainer, Number Memory, Verbal Memory, Chimp
-  Test, Visual Memory and Typing. Each runs on mouse, touch or keyboard and is timed with
-  `performance.now()`. Members get history charts, personal bests, a percentile against all members,
-  and global, weekly, daily and per-tier leaderboards. Results are recomputed and checked on the server
-  (anti-cheat), and a daily challenge keeps streaks.
+  Test, Visual Memory and Typing, each on its own coloured stage with rounded tiles, lives shown as
+  candle flames, synthesised sound (a note per tile, chimes, a level-up arpeggio, a closing bell), a
+  shake for a lost life, sparks for a level or a personal best, and a one-key replay. Timed with
+  `performance.now()` on mouse, touch or keyboard. Members get history charts, personal bests, a
+  percentile against all members, and global, weekly, daily and per-tier leaderboards. Results are
+  recomputed and checked on the server (anti-cheat), and a daily rite keeps streaks.
 - **The Directory**: 16 tests, from Mensa Norway to the high-range tests by other authors (Neurolus,
   NUMERUS, LDA-SWaN, THETIS, Jonathan Wai's SLSE forms and more). Facts come from each official page,
   and the site hosts no questions. Members log results with an optional screenshot as proof, marked
   self-reported and hideable. Each test has a discussion room, and admins can add, edit and remove
   entries.
-- **The Forum**: 12 rooms including the tier-locked Inner Room. Markdown with KaTeX, images, quotes,
-  code, polls, @mentions and ||spoilers||. Also drafts, edit history, upvotes and reputation, bookmarks,
-  followed threads, tags, sorting by new, top or active, full-text search, live replies, pinned and
-  locked threads, and accepted answers.
+- **The Forum**: a classic board in four sections (the Society, the Study, the Parlour, the Sanctum)
+  with 12 rooms including the tier-locked Inner Sanctum, thread and message counts and the latest post
+  per room, and posts beside a member panel (rank, join date, messages, reputation). Markdown with
+  KaTeX, images, quotes, code, polls, @mentions and ||spoilers||. Also drafts, edit history, upvotes and
+  reputation, views, bookmarks, followed threads, tags, sorting, full-text search, live replies, pinned
+  and locked threads, and accepted answers.
+- **The hub**: every main page carries a sidebar with **the Circle** (a live, moderated chat for the
+  whole society), who is present now (members can hide themselves), today's rite, the latest threads
+  and the society's statistics. A Members page lists who is here, the highest Echelon, the most
+  messages and the newest arrivals.
 - **Ranks**: six tiers from Initiate to Laureate driven by a documented 0–1,000 score, plus 17 marks,
-  tier-unlocked profile themes and the Inner Room.
+  tier-unlocked profile themes and the Inner Sanctum.
 - **Members**: the Initiation (a short joining sequence), email, password, magic link, Google, 2FA and
   password reset, all with a minimum age of 13. Profiles have a cropped avatar and banner, links,
   pronouns, a showcase, an activity feed and followers. Privacy is set per item, alongside follow,
