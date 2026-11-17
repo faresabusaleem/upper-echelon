@@ -275,14 +275,34 @@ isOneToOne: false
                   ]
                 },"forum_categories": {
                   Row: {
-                    "created_at": string,"description": string,"id": number,"is_advice": boolean,"min_tier": number,"name": string,"position": number,"slug": string,"staff_only": boolean
+                    "created_at": string,"description": string,"icon": string,"id": number,"is_advice": boolean,"min_tier": number,"name": string,"position": number,"section_id": number | null,"slug": string,"staff_only": boolean
                   }
                   ComputedFields: never
                   Insert: {
-                    "created_at"?: string,"description": string,"id"?: number,"is_advice"?: boolean,"min_tier"?: number,"name": string,"position"?: number,"slug": string,"staff_only"?: boolean
+                    "created_at"?: string,"description": string,"icon"?: string,"id"?: number,"is_advice"?: boolean,"min_tier"?: number,"name": string,"position"?: number,"section_id"?: number | null,"slug": string,"staff_only"?: boolean
                   }
                   Update: {
-                    "created_at"?: string,"description"?: string,"id"?: number,"is_advice"?: boolean,"min_tier"?: number,"name"?: string,"position"?: number,"slug"?: string,"staff_only"?: boolean
+                    "created_at"?: string,"description"?: string,"icon"?: string,"id"?: number,"is_advice"?: boolean,"min_tier"?: number,"name"?: string,"position"?: number,"section_id"?: number | null,"slug"?: string,"staff_only"?: boolean
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "forum_categories_section_id_fkey"
+      columns: ["section_id"]
+isOneToOne: false
+      referencedRelation: "forum_sections"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"forum_sections": {
+                  Row: {
+                    "description": string,"id": number,"name": string,"position": number,"slug": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "description"?: string,"id"?: never,"name": string,"position"?: number,"slug": string
+                  }
+                  Update: {
+                    "description"?: string,"id"?: never,"name"?: string,"position"?: number,"slug"?: string
                   }
                   Relationships: [
                     
@@ -605,6 +625,26 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"presence": {
+                  Row: {
+                    "key": string,"last_seen_at": string,"user_id": string | null
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "key": string,"last_seen_at"?: string,"user_id"?: string | null
+                  }
+                  Update: {
+                    "key"?: string,"last_seen_at"?: string,"user_id"?: string | null
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "presence_user_id_fkey"
+      columns: ["user_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"profile_private": {
                   Row: {
                     "created_at": string,"date_of_birth": string | null,"user_id": string
@@ -627,14 +667,14 @@ isOneToOne: true
                   ]
                 },"profiles": {
                   Row: {
-                    "avatar_url": string | null,"banner_url": string | null,"bio": string | null,"created_at": string,"display_name": string,"echelon_score": number,"id": string,"interests": (string)[],"is_staff": boolean,"links": NonNullable<Json>,"location": string | null,"mind_score": number,"onboarded_at": string | null,"practice_score": number,"pronouns": string | null,"reputation": number,"role": Database["public"]['Enums']["member_role"],"showcase_badges": (string)[],"showcase_games": (Database["public"]['Enums']["game_kind"])[],"theme": string,"tier": number,"updated_at": string,"username": string,"voice_score": number
+                    "avatar_url": string | null,"banner_url": string | null,"bio": string | null,"created_at": string,"display_name": string,"echelon_score": number,"id": string,"interests": (string)[],"is_staff": boolean,"links": NonNullable<Json>,"location": string | null,"message_count": number,"mind_score": number,"onboarded_at": string | null,"practice_score": number,"pronouns": string | null,"reputation": number,"role": Database["public"]['Enums']["member_role"],"showcase_badges": (string)[],"showcase_games": (Database["public"]['Enums']["game_kind"])[],"theme": string,"tier": number,"updated_at": string,"username": string,"voice_score": number
                   }
                   ComputedFields: never
                   Insert: {
-                    "avatar_url"?: string | null,"banner_url"?: string | null,"bio"?: string | null,"created_at"?: string,"display_name": string,"echelon_score"?: number,"id": string,"interests"?: (string)[],"is_staff"?: boolean,"links"?: NonNullable<Json>,"location"?: string | null,"mind_score"?: number,"onboarded_at"?: string | null,"practice_score"?: number,"pronouns"?: string | null,"reputation"?: number,"role"?: Database["public"]['Enums']["member_role"],"showcase_badges"?: (string)[],"showcase_games"?: (Database["public"]['Enums']["game_kind"])[],"theme"?: string,"tier"?: number,"updated_at"?: string,"username": string,"voice_score"?: number
+                    "avatar_url"?: string | null,"banner_url"?: string | null,"bio"?: string | null,"created_at"?: string,"display_name": string,"echelon_score"?: number,"id": string,"interests"?: (string)[],"is_staff"?: boolean,"links"?: NonNullable<Json>,"location"?: string | null,"message_count"?: number,"mind_score"?: number,"onboarded_at"?: string | null,"practice_score"?: number,"pronouns"?: string | null,"reputation"?: number,"role"?: Database["public"]['Enums']["member_role"],"showcase_badges"?: (string)[],"showcase_games"?: (Database["public"]['Enums']["game_kind"])[],"theme"?: string,"tier"?: number,"updated_at"?: string,"username": string,"voice_score"?: number
                   }
                   Update: {
-                    "avatar_url"?: string | null,"banner_url"?: string | null,"bio"?: string | null,"created_at"?: string,"display_name"?: string,"echelon_score"?: number,"id"?: string,"interests"?: (string)[],"is_staff"?: boolean,"links"?: NonNullable<Json>,"location"?: string | null,"mind_score"?: number,"onboarded_at"?: string | null,"practice_score"?: number,"pronouns"?: string | null,"reputation"?: number,"role"?: Database["public"]['Enums']["member_role"],"showcase_badges"?: (string)[],"showcase_games"?: (Database["public"]['Enums']["game_kind"])[],"theme"?: string,"tier"?: number,"updated_at"?: string,"username"?: string,"voice_score"?: number
+                    "avatar_url"?: string | null,"banner_url"?: string | null,"bio"?: string | null,"created_at"?: string,"display_name"?: string,"echelon_score"?: number,"id"?: string,"interests"?: (string)[],"is_staff"?: boolean,"links"?: NonNullable<Json>,"location"?: string | null,"message_count"?: number,"mind_score"?: number,"onboarded_at"?: string | null,"practice_score"?: number,"pronouns"?: string | null,"reputation"?: number,"role"?: Database["public"]['Enums']["member_role"],"showcase_badges"?: (string)[],"showcase_games"?: (Database["public"]['Enums']["game_kind"])[],"theme"?: string,"tier"?: number,"updated_at"?: string,"username"?: string,"voice_score"?: number
                   }
                   Relationships: [
                     
@@ -755,6 +795,32 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"shouts": {
+                  Row: {
+                    "author_id": string,"body": string,"created_at": string,"id": number,"removed_at": string | null,"removed_by": string | null
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "author_id"?: string,"body": string,"created_at"?: string,"id"?: never,"removed_at"?: string | null,"removed_by"?: string | null
+                  }
+                  Update: {
+                    "author_id"?: string,"body"?: string,"created_at"?: string,"id"?: never,"removed_at"?: string | null,"removed_by"?: string | null
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "shouts_author_id_fkey"
+      columns: ["author_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "shouts_removed_by_fkey"
+      columns: ["removed_by"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
                 },"test_results": {
                   Row: {
                     "created_at": string,"id": string,"is_hidden": boolean,"note": string | null,"proof_path": string | null,"scale": string,"score": number,"taken_on": string | null,"test_id": string,"user_id": string
@@ -847,14 +913,14 @@ isOneToOne: false
                   ]
                 },"threads": {
                   Row: {
-                    "author_id": string | null,"body": string,"category_id": number,"created_at": string,"directory_test_id": string | null,"edited_at": string | null,"id": number,"is_locked": boolean,"is_official": boolean,"is_pinned": boolean,"last_activity_at": string,"last_reply_by": string | null,"removed_at": string | null,"removed_by": string | null,"removed_reason": string | null,"reply_count": number,"score": number,"search": unknown,"solved_post_id": number | null,"tags": (string)[],"title": string
+                    "author_id": string | null,"body": string,"category_id": number,"created_at": string,"directory_test_id": string | null,"edited_at": string | null,"id": number,"is_locked": boolean,"is_official": boolean,"is_pinned": boolean,"last_activity_at": string,"last_reply_by": string | null,"removed_at": string | null,"removed_by": string | null,"removed_reason": string | null,"reply_count": number,"score": number,"search": unknown,"solved_post_id": number | null,"tags": (string)[],"title": string,"view_count": number
                   }
                   ComputedFields: never
                   Insert: {
-                    "author_id"?: string | null,"body": string,"category_id": number,"created_at"?: string,"directory_test_id"?: string | null,"edited_at"?: string | null,"id"?: never,"is_locked"?: boolean,"is_official"?: boolean,"is_pinned"?: boolean,"last_activity_at"?: string,"last_reply_by"?: string | null,"removed_at"?: string | null,"removed_by"?: string | null,"removed_reason"?: string | null,"reply_count"?: number,"score"?: number,"search"?: never,"solved_post_id"?: number | null,"tags"?: (string)[],"title": string
+                    "author_id"?: string | null,"body": string,"category_id": number,"created_at"?: string,"directory_test_id"?: string | null,"edited_at"?: string | null,"id"?: never,"is_locked"?: boolean,"is_official"?: boolean,"is_pinned"?: boolean,"last_activity_at"?: string,"last_reply_by"?: string | null,"removed_at"?: string | null,"removed_by"?: string | null,"removed_reason"?: string | null,"reply_count"?: number,"score"?: number,"search"?: never,"solved_post_id"?: number | null,"tags"?: (string)[],"title": string,"view_count"?: number
                   }
                   Update: {
-                    "author_id"?: string | null,"body"?: string,"category_id"?: number,"created_at"?: string,"directory_test_id"?: string | null,"edited_at"?: string | null,"id"?: never,"is_locked"?: boolean,"is_official"?: boolean,"is_pinned"?: boolean,"last_activity_at"?: string,"last_reply_by"?: string | null,"removed_at"?: string | null,"removed_by"?: string | null,"removed_reason"?: string | null,"reply_count"?: number,"score"?: number,"search"?: never,"solved_post_id"?: number | null,"tags"?: (string)[],"title"?: string
+                    "author_id"?: string | null,"body"?: string,"category_id"?: number,"created_at"?: string,"directory_test_id"?: string | null,"edited_at"?: string | null,"id"?: never,"is_locked"?: boolean,"is_official"?: boolean,"is_pinned"?: boolean,"last_activity_at"?: string,"last_reply_by"?: string | null,"removed_at"?: string | null,"removed_by"?: string | null,"removed_reason"?: string | null,"reply_count"?: number,"score"?: number,"search"?: never,"solved_post_id"?: number | null,"tags"?: (string)[],"title"?: string,"view_count"?: number
                   }
                   Relationships: [
                     {
@@ -937,14 +1003,14 @@ isOneToOne: false
                   ]
                 },"user_settings": {
                   Row: {
-                    "activity_visibility": Database["public"]['Enums']["visibility"],"dm_policy": Database["public"]['Enums']["dm_policy"],"followers_visibility": Database["public"]['Enums']["visibility"],"game_stats_visibility": Database["public"]['Enums']["visibility"],"grain": boolean,"high_contrast": boolean,"notify_email": NonNullable<Json>,"notify_inapp": NonNullable<Json>,"reduced_motion": boolean,"test_results_visibility": Database["public"]['Enums']["visibility"],"updated_at": string,"user_id": string
+                    "activity_visibility": Database["public"]['Enums']["visibility"],"dm_policy": Database["public"]['Enums']["dm_policy"],"followers_visibility": Database["public"]['Enums']["visibility"],"game_stats_visibility": Database["public"]['Enums']["visibility"],"grain": boolean,"high_contrast": boolean,"notify_email": NonNullable<Json>,"notify_inapp": NonNullable<Json>,"reduced_motion": boolean,"show_online": boolean,"test_results_visibility": Database["public"]['Enums']["visibility"],"updated_at": string,"user_id": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "activity_visibility"?: Database["public"]['Enums']["visibility"],"dm_policy"?: Database["public"]['Enums']["dm_policy"],"followers_visibility"?: Database["public"]['Enums']["visibility"],"game_stats_visibility"?: Database["public"]['Enums']["visibility"],"grain"?: boolean,"high_contrast"?: boolean,"notify_email"?: NonNullable<Json>,"notify_inapp"?: NonNullable<Json>,"reduced_motion"?: boolean,"test_results_visibility"?: Database["public"]['Enums']["visibility"],"updated_at"?: string,"user_id": string
+                    "activity_visibility"?: Database["public"]['Enums']["visibility"],"dm_policy"?: Database["public"]['Enums']["dm_policy"],"followers_visibility"?: Database["public"]['Enums']["visibility"],"game_stats_visibility"?: Database["public"]['Enums']["visibility"],"grain"?: boolean,"high_contrast"?: boolean,"notify_email"?: NonNullable<Json>,"notify_inapp"?: NonNullable<Json>,"reduced_motion"?: boolean,"show_online"?: boolean,"test_results_visibility"?: Database["public"]['Enums']["visibility"],"updated_at"?: string,"user_id": string
                   }
                   Update: {
-                    "activity_visibility"?: Database["public"]['Enums']["visibility"],"dm_policy"?: Database["public"]['Enums']["dm_policy"],"followers_visibility"?: Database["public"]['Enums']["visibility"],"game_stats_visibility"?: Database["public"]['Enums']["visibility"],"grain"?: boolean,"high_contrast"?: boolean,"notify_email"?: NonNullable<Json>,"notify_inapp"?: NonNullable<Json>,"reduced_motion"?: boolean,"test_results_visibility"?: Database["public"]['Enums']["visibility"],"updated_at"?: string,"user_id"?: string
+                    "activity_visibility"?: Database["public"]['Enums']["visibility"],"dm_policy"?: Database["public"]['Enums']["dm_policy"],"followers_visibility"?: Database["public"]['Enums']["visibility"],"game_stats_visibility"?: Database["public"]['Enums']["visibility"],"grain"?: boolean,"high_contrast"?: boolean,"notify_email"?: NonNullable<Json>,"notify_inapp"?: NonNullable<Json>,"reduced_motion"?: boolean,"show_online"?: boolean,"test_results_visibility"?: Database["public"]['Enums']["visibility"],"updated_at"?: string,"user_id"?: string
                   }
                   Relationships: [
                     {
@@ -960,7 +1026,7 @@ isOneToOne: true
           Views: {
             "thread_list": {
                   Row: {
-                    "author_avatar": string | null,"author_id": string | null,"author_name": string | null,"author_tier": number | null,"author_username": string | null,"category_id": number,"category_min_tier": number,"category_name": string,"category_slug": string,"created_at": string,"directory_test_id": string | null,"has_poll": boolean | null,"id": number,"is_locked": boolean,"is_official": boolean,"is_pinned": boolean,"last_activity_at": string,"last_reply_name": string | null,"last_reply_username": string | null,"removed_at": string | null,"reply_count": number,"score": number,"solved_post_id": number | null,"tags": (string)[],"title": string
+                    "author_avatar": string | null,"author_id": string | null,"author_name": string | null,"author_tier": number | null,"author_username": string | null,"category_id": number,"category_min_tier": number,"category_name": string,"category_slug": string,"created_at": string,"directory_test_id": string | null,"has_poll": boolean | null,"id": number,"is_locked": boolean,"is_official": boolean,"is_pinned": boolean,"last_activity_at": string,"last_reply_avatar": string | null,"last_reply_name": string | null,"last_reply_tier": number | null,"last_reply_username": string | null,"removed_at": string | null,"reply_count": number,"score": number,"solved_post_id": number | null,"tags": (string)[],"title": string,"view_count": number
                   }
                   ComputedFields: never
                   Relationships: [
@@ -1025,6 +1091,9 @@ isOneToOne: false
 "complete_initiation":
 { Args: { "p_date_of_birth": string,"p_display_name": string,"p_interests": (string)[],"p_username": string }; Returns: undefined
                            },
+"count_thread_view":
+{ Args: { "tid": number }; Returns: undefined
+                           },
 "current_streak":
 { Args: { "uid": string }; Returns: number
                            },
@@ -1044,6 +1113,14 @@ isOneToOne: false
 { Args: { "uid": string }; Returns: {
               "followers": number,"following": number
             }[]
+                           },
+"forum_index":
+{ Args: Record<PropertyKey, never>; Returns: {
+              "can_view": boolean,"cat_position": number,"category_id": number,"description": string,"icon": string,"last_activity_at": string,"last_avatar_url": string,"last_display_name": string,"last_thread_id": number,"last_thread_title": string,"last_tier": number,"last_username": string,"messages": number,"min_tier": number,"name": string,"section_description": string,"section_name": string,"section_position": number,"section_slug": string,"slug": string,"staff_only": boolean,"threads": number
+            }[]
+                           },
+"forum_stats":
+{ Args: Record<PropertyKey, never>; Returns: Json
                            },
 "game_distribution":
 { Args: { "buckets"?: number,"g": Database["public"]['Enums']["game_kind"],"hi": number,"lo": number }; Returns: {
@@ -1132,6 +1209,9 @@ isOneToOne: false
 "notify":
 { Args: { "actor": string,"p_data"?: Json,"p_kind": string,"p_post": number,"p_thread": number,"recipient": string }; Returns: undefined
                            },
+"online_now":
+{ Args: { "lim"?: number }; Returns: Json
+                           },
 "poll_results":
 { Args: { "p_poll": number }; Returns: {
               "option_index": number,"votes": number
@@ -1147,6 +1227,9 @@ isOneToOne: false
                            },
 "recompute_member":
 { Args: { "uid": string }; Returns: undefined
+                           },
+"record_presence":
+{ Args: { "p_key": string,"p_user"?: string }; Returns: undefined
                            },
 "require_moderator":
 { Args: Record<PropertyKey, never>; Returns: string
@@ -1178,7 +1261,7 @@ isOneToOne: false
                            }
           }
           Enums: {
-            "dm_policy": "everyone"|"following"|"no_one","game_kind": "reaction"|"sequence"|"aim"|"number"|"verbal"|"chimp"|"visual"|"typing","member_role": "member"|"moderator"|"admin","report_target": "thread"|"post"|"profile"|"message"|"image"|"test_result","visibility": "everyone"|"followers"|"only_me"
+            "dm_policy": "everyone"|"following"|"no_one","game_kind": "reaction"|"sequence"|"aim"|"number"|"verbal"|"chimp"|"visual"|"typing","member_role": "member"|"moderator"|"admin","report_target": "thread"|"post"|"profile"|"message"|"image"|"test_result"|"shout","visibility": "everyone"|"followers"|"only_me"
           }
           CompositeTypes: {
             [_ in never]: never
@@ -1294,7 +1377,7 @@ export type CompositeTypes<
 export const Constants = {
   "public": {
           Enums: {
-            "dm_policy": ["everyone", "following", "no_one"],"game_kind": ["reaction", "sequence", "aim", "number", "verbal", "chimp", "visual", "typing"],"member_role": ["member", "moderator", "admin"],"report_target": ["thread", "post", "profile", "message", "image", "test_result"],"visibility": ["everyone", "followers", "only_me"]
+            "dm_policy": ["everyone", "following", "no_one"],"game_kind": ["reaction", "sequence", "aim", "number", "verbal", "chimp", "visual", "typing"],"member_role": ["member", "moderator", "admin"],"report_target": ["thread", "post", "profile", "message", "image", "test_result", "shout"],"visibility": ["everyone", "followers", "only_me"]
           }
         }
 } as const
