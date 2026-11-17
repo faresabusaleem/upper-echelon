@@ -233,6 +233,7 @@
 @keyframes snuff { 0% { transform: scale(1.25); opacity: 0.2; filter: blur(2px); } 100% { transform: scale(1); opacity: 1; filter: none; } }
 @keyframes rise-in { from { transform: translateY(18px) scale(0.98); opacity: 0; } to { transform: none; opacity: 1; } }
 @keyframes tile-in { from { transform: scale(0.72); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes tile-out { to { transform: scale(0.6); opacity: 0; } }
 @keyframes tile-win { 0% { transform: scale(1); } 40% { transform: scale(1.08); filter: brightness(1.25); } 100% { transform: scale(1); } }
 @keyframes count-up { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
 

@@ -153,7 +153,7 @@ function SoundToggle() {
  */
 export function Hud({
   level,
-  levelLabel = "Rite",
+  levelLabel = "Level",
   lives,
   items = [],
 }: {
@@ -191,4 +191,99 @@ export function Hud({
 /** Kept for trials that only need simple counters: the same display, without lives. */
 export function Readout({ items }: { items: Array<{ label: string; value: ReactNode }> }) {
   return <Hud items={items} />;
+}
+
+/** The short line above the playing area ("Remember.", "Your turn."), in the same place in every trial. */
+export function Prompt({ children }: { children?: ReactNode }) {
+  return (
+    <p className="mb-4 mt-2 h-5 text-center text-small text-white/55" aria-live="polite">
+      {children}
+    </p>
+  );
+}
+
+export type TileBack = "lit" | "wrong" | "missed" | "hidden";
+
+/**
+ * A tile with two faces that turns over in 3D. The front is what a tile shows at rest (plain, or a
+ * number in the Chimp Test); the back is the trial's colour when lit, ember for a mistake, an
+ * outline for a tile that was missed, or a plain block when hiding a number.
+ */
+export function FlipTile({
+  up,
+  back = "lit",
+  front,
+  frontClassName,
+  label,
+  index,
+  entering = false,
+  winning = false,
+  gone = false,
+  disabled = false,
+  flipMs,
+  onPress,
+}: {
+  up: boolean;
+  back?: TileBack;
+  front?: ReactNode;
+  frontClassName?: string;
+  label: string;
+  index: number;
+  entering?: boolean;
+  winning?: boolean;
+  gone?: boolean;
+  disabled?: boolean;
+  flipMs: number;
+  onPress?: () => void;
+}) {
+  const backStyle: React.CSSProperties =
+    back === "wrong"
+      ? { background: "#c8573f", boxShadow: "0 0 22px rgba(200,87,63,0.55)" }
+      : back === "missed"
+        ? { background: "color-mix(in srgb, var(--tint) 33%, transparent)", boxShadow: "inset 0 0 0 2px var(--tint)" }
+        : back === "hidden"
+          ? { background: "var(--tint)", boxShadow: "0 0 16px var(--glow)" }
+          : { background: "var(--tint)", boxShadow: "0 0 26px var(--glow)" };
+  if (gone) {
+    return <span aria-hidden className="aspect-square w-full motion-safe:animate-[tile-out_.22s_ease-in_both]" />;
+  }
+  return (
+    <button
+      type="button"
+      disabled={disabled}
+      aria-label={label}
+      onPointerDown={(e) => {
+        e.preventDefault();
+        onPress?.();
+      }}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onPress?.();
+        }
+      }}
+      className={cn(
+        "group relative aspect-square w-full touch-manipulation outline-offset-2 [perspective:700px] disabled:cursor-default",
+        "transition-transform duration-100 ease-out active:scale-[0.9]",
+        entering && "motion-safe:animate-[tile-in_.34s_cubic-bezier(.2,.9,.3,1.25)_both]",
+        winning && "motion-safe:animate-[tile-win_.5s_ease-out_both]",
+      )}
+      style={{ animationDelay: entering ? `${Math.min(index * 14, 160)}ms` : winning ? `${(index % 7) * 25}ms` : undefined }}
+    >
+      <span
+        className="absolute inset-0 transition-transform ease-[cubic-bezier(.3,.7,.3,1)] [transform-style:preserve-3d]"
+        style={{ transform: up ? "rotateY(180deg)" : "rotateY(0deg)", transitionDuration: `${flipMs}ms` }}
+      >
+        <span
+          className={cn(
+            "absolute inset-0 flex items-center justify-center rounded-[14px] [backface-visibility:hidden]",
+            frontClassName ?? "bg-white/[0.09] ring-1 ring-inset ring-white/[0.05] group-enabled:group-hover:bg-white/[0.15]",
+          )}
+        >
+          {front}
+        </span>
+        <span className="absolute inset-0 rounded-[14px] [backface-visibility:hidden] [transform:rotateY(180deg)]" style={backStyle} />
+      </span>
+    </button>
+  );
 }

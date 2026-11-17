@@ -5,7 +5,7 @@ import { VERBAL_LIVES, nextVerbalWord } from "@/lib/games/engine";
 import { GAME_THEMES } from "@/lib/games/themes";
 import { WORDS } from "@/lib/games/words";
 import { useArena } from "../fx";
-import { GameIntro, Hud, Stage } from "../game-ui";
+import { GameIntro, Hud, Prompt, Stage } from "../game-ui";
 import { ResultPanel } from "../result-panel";
 import { type GameOutcome, useGameSession } from "../use-game-session";
 
@@ -101,6 +101,7 @@ export function VerbalGame({ isMember }: { isMember: boolean }) {
   return (
     <Stage kind="verbal" ref={stageRef}>
       <Hud level={score} levelLabel="Score" lives={{ left: lives, total: VERBAL_LIVES }} />
+      <Prompt>Seen it before, or new?</Prompt>
       <p
         key={turn}
         className="font-display text-[clamp(3rem,10vw,6.5rem)] leading-none motion-safe:animate-[rise-in_.28s_ease-out_both]"

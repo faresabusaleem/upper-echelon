@@ -1,15 +1,23 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { SEQUENCE_FLASH_MS, SEQUENCE_GAP_MS, checkSequenceInput, extendSequence } from "@/lib/games/engine";
+import { SEQUENCE_FLASH_MS, SEQUENCE_FLIP_MS, SEQUENCE_GAP_MS, checkSequenceInput, extendSequence } from "@/lib/games/engine";
 import { GAME_THEMES } from "@/lib/games/themes";
 import { useArena } from "../fx";
-import { GameIntro, Hud, Stage, tileClass } from "../game-ui";
+import { FlipTile, GameIntro, Hud, Prompt, Stage, type TileBack } from "../game-ui";
 import { ResultPanel } from "../result-panel";
 import { type GameOutcome, useGameSession } from "../use-game-session";
 
-type Phase = "intro" | "showing" | "input" | "between" | "result";
+/**
+ * Phases: enter (the board settles in) → showing (each step turns a tile up for SEQUENCE_FLASH_MS,
+ * then down during SEQUENCE_GAP_MS) → input → clear (the board ripples) → showing again, one longer.
+ * A wrong tile turns ember, the one that was due is outlined, and the trial ends.
+ */
+type Phase = "intro" | "enter" | "showing" | "input" | "clear" | "wrong" | "result";
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+const ENTER_MS = 420;
+const CLEAR_MS = 650;
+const WRONG_MS = 1200;
 
 export function SequenceGame({ isMember }: { isMember: boolean }) {
   const { begin, finish } = useGameSession("sequence", isMember);
@@ -19,7 +27,7 @@ export function SequenceGame({ isMember }: { isMember: boolean }) {
   const [inputs, setInputs] = useState<number[]>([]);
   const [lit, setLit] = useState<number | null>(null);
   const [pressed, setPressed] = useState<number | null>(null);
-  const [wrong, setWrong] = useState<number | null>(null);
+  const [wrong, setWrong] = useState<{ pressed: number; due: number } | null>(null);
   const [outcome, setOutcome] = useState<GameOutcome | null>(null);
   const alive = useRef(true);
 
@@ -34,7 +42,7 @@ export function SequenceGame({ isMember }: { isMember: boolean }) {
     async (s: number[]) => {
       setPhase("showing");
       setInputs([]);
-      await sleep(650);
+      await sleep(500);
       for (const tile of s) {
         if (!alive.current) return;
         setLit(tile);
@@ -51,8 +59,12 @@ export function SequenceGame({ isMember }: { isMember: boolean }) {
   const start = useCallback(async () => {
     setOutcome(null);
     setWrong(null);
+    setLit(null);
+    setPressed(null);
+    setPhase("enter");
     fx.start();
     await begin();
+    await sleep(ENTER_MS);
     const s = extendSequence([]);
     setSeq(s);
     void play(s);
@@ -61,31 +73,31 @@ export function SequenceGame({ isMember }: { isMember: boolean }) {
   const press = useCallback(
     async (tile: number) => {
       if (phase !== "input") return;
-      setPressed(tile);
-      setTimeout(() => setPressed((p) => (p === tile ? null : p)), 180);
       const next = [...inputs, tile];
       setInputs(next);
       const verdict = checkSequenceInput(seq, next);
       if (verdict === "wrong") {
-        setWrong(tile);
+        setWrong({ pressed: tile, due: seq[next.length - 1] });
+        setPhase("wrong");
         fx.life();
-        setPhase("between");
-        await sleep(700);
+        await sleep(WRONG_MS);
         const o = await finish({ level: seq.length - 1 });
         setOutcome(o);
         setPhase("result");
         fx.end(o);
-      } else if (verdict === "complete") {
-        fx.tile(tile);
-        setPhase("between");
-        await sleep(260);
+        return;
+      }
+      fx.tile(tile);
+      setPressed(tile);
+      setTimeout(() => setPressed((p) => (p === tile ? null : p)), SEQUENCE_FLIP_MS + 120);
+      if (verdict === "complete") {
+        setPhase("clear");
+        await sleep(SEQUENCE_FLIP_MS + 80);
         fx.level();
-        await sleep(450);
+        await sleep(CLEAR_MS);
         const s = extendSequence(seq);
         setSeq(s);
         void play(s);
-      } else {
-        fx.tile(tile);
       }
     },
     [finish, fx, inputs, phase, play, seq],
@@ -116,32 +128,36 @@ export function SequenceGame({ isMember }: { isMember: boolean }) {
     );
   }
 
+  const faceOf = (i: number): { up: boolean; back: TileBack } => {
+    if (wrong?.pressed === i) return { up: true, back: "wrong" };
+    if (wrong?.due === i) return { up: true, back: "missed" };
+    if (lit === i || pressed === i) return { up: true, back: "lit" };
+    return { up: false, back: "lit" };
+  };
   return (
     <Stage kind="sequence" ref={stageRef}>
-      <Hud level={seq.length} items={[{ label: "Progress", value: phase === "input" ? `${inputs.length}/${seq.length}` : "·" }]} />
-      <p className="absolute inset-x-0 top-24 text-center text-small text-white/60" aria-live="polite">
-        {phase === "showing" ? "Watch." : phase === "input" ? "Your turn." : ""}
-      </p>
-      <div className="mt-6 grid w-full max-w-[min(24rem,78vw)] grid-cols-3 gap-3 sm:gap-3.5">
-        {Array.from({ length: 9 }).map((_, i) => (
-          <button
-            key={i}
-            type="button"
-            aria-label={`Tile ${i + 1}`}
-            disabled={phase !== "input"}
-            onPointerDown={(e) => {
-              e.preventDefault();
-              void press(i);
-            }}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" || e.key === " ") {
-                e.preventDefault();
-                void press(i);
-              }
-            }}
-            className={`aspect-square w-full ${tileClass(wrong === i ? "wrong" : lit === i || pressed === i ? "lit" : phase === "input" ? "idle" : "off")}`}
-          />
-        ))}
+      <Hud level={Math.max(seq.length, 1)} items={[{ label: "Progress", value: phase === "input" ? `${inputs.length}/${seq.length}` : "·" }]} />
+      <Prompt>
+        {phase === "showing" ? "Watch." : phase === "input" ? "Your turn." : phase === "clear" ? "Level complete." : phase === "wrong" ? "Wrong tile." : ""}
+      </Prompt>
+      <div className="grid w-full max-w-[min(24rem,78vw)] grid-cols-3 gap-2.5 sm:gap-3">
+        {Array.from({ length: 9 }).map((_, i) => {
+          const f = faceOf(i);
+          return (
+            <FlipTile
+              key={i}
+              index={i}
+              label={`Tile ${i + 1}`}
+              up={f.up}
+              back={f.back}
+              flipMs={SEQUENCE_FLIP_MS}
+              entering={phase === "enter"}
+              winning={phase === "clear"}
+              disabled={phase !== "input"}
+              onPress={() => void press(i)}
+            />
+          );
+        })}
       </div>
     </Stage>
   );

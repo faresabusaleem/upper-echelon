@@ -60,7 +60,7 @@ export async function SiteHeader({ overlay = false }: { overlay?: boolean }) {
         Skip to content
       </a>
       <div className="mx-auto flex h-[var(--header-h)] max-w-[92rem] items-center gap-4 px-[var(--gutter)]">
-        <Link href="/" className="shrink-0" aria-label="Upper Echelon, home">
+        <Link href="/" className="flex shrink-0 items-center self-stretch" aria-label="Upper Echelon, home">
           <Wordmark />
         </Link>
         <NavTabs nav={NAV} icons={NAV_ICONS} />

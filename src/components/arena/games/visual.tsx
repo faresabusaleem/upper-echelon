@@ -3,9 +3,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { VISUAL_LIVES, VISUAL_MISSES_PER_ROUND, VISUAL_TIMING as T, visualGridSize, visualPattern } from "@/lib/games/engine";
 import { GAME_THEMES } from "@/lib/games/themes";
-import { cn } from "@/lib/utils";
 import { useArena } from "../fx";
-import { GameIntro, Hud, Stage } from "../game-ui";
+import { FlipTile, GameIntro, Hud, Prompt, Stage, type TileBack } from "../game-ui";
 import { ResultPanel } from "../result-panel";
 import { type GameOutcome, useGameSession } from "../use-game-session";
 
@@ -20,71 +19,6 @@ import { type GameOutcome, useGameSession } from "../use-game-session";
  */
 type Phase = "intro" | "enter" | "show" | "hide" | "input" | "clear" | "lost" | "ending" | "result";
 const THEME = GAME_THEMES.visual;
-
-type Face = "down" | "up" | "found" | "wrong" | "missed";
-
-/** A tile that turns over in 3D: face down is plain, face up is the trial's colour (or ember for a miss). */
-function FlipTile({
-  face,
-  index,
-  entering,
-  winning,
-  disabled,
-  onPress,
-}: {
-  face: Face;
-  index: number;
-  entering: boolean;
-  winning: boolean;
-  disabled: boolean;
-  onPress: () => void;
-}) {
-  const up = face !== "down";
-  return (
-    <button
-      type="button"
-      disabled={disabled}
-      aria-label={`Square ${index + 1}`}
-      aria-pressed={face === "found" || face === "wrong"}
-      onPointerDown={(e) => {
-        e.preventDefault();
-        onPress();
-      }}
-      onKeyDown={(e) => {
-        if (e.key === "Enter" || e.key === " ") {
-          e.preventDefault();
-          onPress();
-        }
-      }}
-      className={cn(
-        "group relative aspect-square w-full touch-manipulation outline-offset-2 [perspective:700px] disabled:cursor-default",
-        "transition-transform duration-100 ease-out active:scale-[0.9]",
-        entering && "motion-safe:animate-[tile-in_.32s_cubic-bezier(.2,.9,.3,1.25)_both]",
-        winning && "motion-safe:animate-[tile-win_.5s_ease-out_both]",
-      )}
-      style={{ animationDelay: entering ? `${Math.min(index * 14, 160)}ms` : winning ? `${(index % 7) * 25}ms` : undefined }}
-    >
-      <span
-        className="absolute inset-0 transition-transform ease-[cubic-bezier(.3,.7,.3,1)] [transform-style:preserve-3d]"
-        style={{ transform: up ? "rotateY(180deg)" : "rotateY(0deg)", transitionDuration: `${T.flip}ms` }}
-      >
-        {/* Face down */}
-        <span className="absolute inset-0 rounded-[14px] bg-white/[0.09] ring-1 ring-inset ring-white/[0.05] [backface-visibility:hidden] group-enabled:group-hover:bg-white/[0.15]" />
-        {/* Face up */}
-        <span
-          className="absolute inset-0 rounded-[14px] [backface-visibility:hidden] [transform:rotateY(180deg)]"
-          style={
-            face === "wrong"
-              ? { background: "#c8573f", boxShadow: "0 0 22px rgba(200,87,63,0.55)" }
-              : face === "missed"
-                ? { background: `${THEME.tint}55`, boxShadow: `inset 0 0 0 2px ${THEME.tint}` }
-                : { background: THEME.tint, boxShadow: `0 0 26px ${THEME.glow}` }
-          }
-        />
-      </span>
-    </button>
-  );
-}
 
 export function VisualGame({ isMember }: { isMember: boolean }) {
   const { begin, finish } = useGameSession("visual", isMember);
@@ -190,39 +124,49 @@ export function VisualGame({ isMember }: { isMember: boolean }) {
   }
 
   const size = visualGridSize(level);
-  const faceOf = (cell: number): Face => {
-    if (misses.has(cell)) return "wrong";
-    if (found.has(cell)) return "found";
-    if (phase === "show" && pattern.has(cell)) return "up";
-    if ((phase === "lost" || phase === "ending") && pattern.has(cell)) return "missed";
-    return "down";
+  const faceOf = (cell: number): { up: boolean; back: TileBack } => {
+    if (misses.has(cell)) return { up: true, back: "wrong" };
+    if (found.has(cell)) return { up: true, back: "lit" };
+    if (phase === "show" && pattern.has(cell)) return { up: true, back: "lit" };
+    if ((phase === "lost" || phase === "ending") && pattern.has(cell)) return { up: true, back: "missed" };
+    return { up: false, back: "lit" };
   };
   return (
     <Stage kind="visual" ref={stageRef}>
-      <Hud
-        level={level}
-        lives={{ left: lives, total: VISUAL_LIVES }}
-        items={[{ label: "Misses", value: `${misses.size}/${VISUAL_MISSES_PER_ROUND}` }]}
-      />
-      <p className="mb-4 mt-2 h-5 text-center text-small text-white/55" aria-live="polite">
-        {phase === "show" ? "Remember." : phase === "input" ? "Turn them over." : phase === "lost" ? "A flame goes out." : phase === "clear" ? "Rite complete." : ""}
-      </p>
+      <Hud level={level} lives={{ left: lives, total: VISUAL_LIVES }} items={[{ label: "Misses", value: `${misses.size}/${VISUAL_MISSES_PER_ROUND}` }]} />
+      <Prompt>
+        {phase === "show"
+          ? "Remember."
+          : phase === "input"
+            ? "Turn them over."
+            : phase === "lost"
+              ? "A flame goes out."
+              : phase === "clear"
+                ? "Level complete."
+                : ""}
+      </Prompt>
       <div
         key={`${round}-${size}`}
         className="grid w-full max-w-[min(28rem,84vw)] gap-2 sm:gap-2.5"
         style={{ gridTemplateColumns: `repeat(${size}, minmax(0, 1fr))` }}
       >
-        {Array.from({ length: size * size }).map((_, cell) => (
-          <FlipTile
-            key={cell}
-            index={cell}
-            face={faceOf(cell)}
-            entering={phase === "enter"}
-            winning={phase === "clear" && found.has(cell)}
-            disabled={phase !== "input"}
-            onPress={() => void press(cell)}
-          />
-        ))}
+        {Array.from({ length: size * size }).map((_, cell) => {
+          const f = faceOf(cell);
+          return (
+            <FlipTile
+              key={cell}
+              index={cell}
+              label={`Square ${cell + 1}`}
+              up={f.up}
+              back={f.back}
+              flipMs={T.flip}
+              entering={phase === "enter"}
+              winning={phase === "clear" && found.has(cell)}
+              disabled={phase !== "input"}
+              onPress={() => void press(cell)}
+            />
+          );
+        })}
       </div>
     </Stage>
   );

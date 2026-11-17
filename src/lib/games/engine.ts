@@ -46,8 +46,13 @@ export function reactionScore(times: number[]): number {
 // Sequence Memory (3 × 3 grid)
 // ---------------------------------------------------------------------------------------------
 export const SEQUENCE_TILES = 9;
-export const SEQUENCE_FLASH_MS = 420;
-export const SEQUENCE_GAP_MS = 180;
+/** How long a tile takes to turn over in the tile trials (Visual Memory, Sequence Memory, Chimp Test). */
+export const TILE_FLIP_MS = 280;
+
+/** Sequence Memory: each step turns a tile up for FLASH, then down during GAP. Quicker flips keep long sequences brisk. */
+export const SEQUENCE_FLIP_MS = 200;
+export const SEQUENCE_FLASH_MS = 460;
+export const SEQUENCE_GAP_MS = 240;
 
 export function extendSequence(seq: number[], rng: Rng = Math.random): number[] {
   return [...seq, randInt(rng, 0, SEQUENCE_TILES - 1)];
@@ -157,7 +162,7 @@ export const VISUAL_TIMING = {
   /** A new board settles in (tiles scale up, staggered) before the pattern shows. */
   enter: 420,
   /** A tile turning over, in either direction. */
-  flip: 200,
+  flip: TILE_FLIP_MS,
   /** How long the pattern stays face up. */
   show: 1000,
   /** After the last correct tile: the board glows, then clears, then the next one enters. */

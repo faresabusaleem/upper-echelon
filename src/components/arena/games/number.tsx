@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { numberDisplayMs, randomDigits } from "@/lib/games/engine";
 import { GAME_THEMES } from "@/lib/games/themes";
 import { useArena } from "../fx";
-import { GameIntro, Hud, Stage } from "../game-ui";
+import { GameIntro, Hud, Prompt, Stage } from "../game-ui";
 import { ResultPanel } from "../result-panel";
 import { type GameOutcome, useGameSession } from "../use-game-session";
 
@@ -103,7 +103,8 @@ export function NumberGame({ isMember }: { isMember: boolean }) {
 
   return (
     <Stage kind="number" ref={stageRef}>
-      <Hud level={length} levelLabel="Digits" lives={{ left: phase === "wrong" ? 0 : 1, total: 1 }} />
+      <Hud level={length} items={[{ label: "Digits", value: length }]} lives={{ left: phase === "wrong" ? 0 : 1, total: 1 }} />
+      <Prompt>{phase === "show" ? "Remember." : phase === "correct" ? "Level complete." : phase === "wrong" ? "A flame goes out." : ""}</Prompt>
       {phase === "show" && (
         <div className="flex w-full max-w-3xl flex-col items-center gap-8">
           <p className="figure break-all text-center text-[clamp(2.5rem,9vw,6rem)] leading-none tracking-[0.04em]" aria-live="polite">
