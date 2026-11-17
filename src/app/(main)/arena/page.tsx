@@ -81,7 +81,7 @@ export default async function ArenaPage() {
         {GAME_KINDS.map((k) => {
           const mine = bests.get(k);
           return (
-            <li key={k}>
+            <li key={k} className="h-full">
               <TrialCard kind={k} daily={k === today} best={mine ? formatScore(k, mine.best) : null} />
             </li>
           );

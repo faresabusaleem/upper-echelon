@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { GAME_KINDS, GAMES, dailyGame, formatScore, gameBySlug, isBetter, rateScore } from "@/lib/games/catalog";
 import { evaluate, minimumDurationMs } from "@/lib/games/validate";
 import { PASSAGES } from "@/lib/games/passages";
-import { REACTION_CEILING } from "@/lib/games/engine";
+import { REACTION_CEILING, VISUAL_TIMING, visualTileCount } from "@/lib/games/engine";
 
 describe("catalogue", () => {
   it("defines all eight games with unique slugs", () => {
@@ -68,6 +68,18 @@ describe("anti-cheat evaluation", () => {
   it("rejects reaction attempts over the ceiling, which the game voids before they are kept", () => {
     expect(evaluate("reaction", { times: [220, 230, 240, 250, REACTION_CEILING] }, slow).ok).toBe(true);
     expect(evaluate("reaction", { times: [220, 230, 240, 250, REACTION_CEILING + 1] }, slow).ok).toBe(false);
+  });
+  it("accepts an honest Visual Memory run at the game's own pacing and flags an impossible one", () => {
+    const levels = 12;
+    let honest = 0;
+    for (let l = 1; l <= levels; l++) {
+      const t = VISUAL_TIMING;
+      honest += t.enter + t.flip + t.show + t.flip + visualTileCount(l) * 160 + t.clear;
+    }
+    const ok = evaluate("visual", { level: levels }, honest);
+    expect(ok.ok && ok.flagged).toBe(false);
+    const fast = evaluate("visual", { level: levels }, honest / 4);
+    expect(fast.ok && fast.flagged).toBe(true);
   });
   it("rejects malformed payloads", () => {
     expect(evaluate("reaction", { times: [200, 200] }, slow).ok).toBe(false);

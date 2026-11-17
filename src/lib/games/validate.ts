@@ -13,7 +13,7 @@ import {
   numberDisplayMs,
   reactionScore,
   typingStats,
-  visualTileCount,
+  visualMinimumLevelMs,
   mean,
 } from "./engine";
 import { passageById } from "./passages";
@@ -89,7 +89,7 @@ export function minimumDurationMs(kind: GameKind, details: Record<string, unknow
     case "visual": {
       const l = details.level as number;
       let total = 0;
-      for (let k = 1; k <= l; k++) total += 1400 + visualTileCount(k) * 120;
+      for (let k = 1; k <= l; k++) total += visualMinimumLevelMs(k);
       return total;
     }
     case "typing":

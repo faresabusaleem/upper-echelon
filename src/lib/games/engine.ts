@@ -149,6 +149,31 @@ export function chimpLayout(count: number, rng: Rng = Math.random): number[] {
 export const VISUAL_LIVES = 3;
 export const VISUAL_MISSES_PER_ROUND = 3;
 
+/**
+ * Visual Memory's pacing, in milliseconds. The game plays to these numbers, and the anti-cheat
+ * minimum for a run (validate.ts) is derived from them, so the two can never drift apart.
+ */
+export const VISUAL_TIMING = {
+  /** A new board settles in (tiles scale up, staggered) before the pattern shows. */
+  enter: 420,
+  /** A tile turning over, in either direction. */
+  flip: 200,
+  /** How long the pattern stays face up. */
+  show: 1000,
+  /** After the last correct tile: the board glows, then clears, then the next one enters. */
+  clear: 700,
+  /** After a life is lost: the missed pattern is shown before the round is replayed. */
+  retry: 1100,
+  /** The fastest plausible deliberate tap per tile, used only by the anti-cheat. */
+  minTap: 90,
+} as const;
+
+/** The least time a level can take when played honestly (no clicking, perfect speed). */
+export function visualMinimumLevelMs(level: number): number {
+  const t = VISUAL_TIMING;
+  return Math.round((t.enter + t.flip + t.show + t.flip + t.clear) * 0.85) + visualTileCount(level) * t.minTap;
+}
+
 export function visualGridSize(level: number): number {
   return Math.min(3 + Math.floor((Math.max(level, 1) - 1) / 3), 8);
 }
