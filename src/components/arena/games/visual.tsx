@@ -2,8 +2,9 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { VISUAL_LIVES, VISUAL_MISSES_PER_ROUND, visualGridSize, visualPattern } from "@/lib/games/engine";
-import { cn } from "@/lib/utils";
-import { GameIntro, Lives, Readout, Stage } from "../game-ui";
+import { GAME_THEMES } from "@/lib/games/themes";
+import { useArena } from "../fx";
+import { GameIntro, Hud, Stage, tileClass } from "../game-ui";
 import { ResultPanel } from "../result-panel";
 import { type GameOutcome, useGameSession } from "../use-game-session";
 
@@ -11,6 +12,7 @@ type Phase = "intro" | "show" | "input" | "between" | "result";
 
 export function VisualGame({ isMember }: { isMember: boolean }) {
   const { begin, finish } = useGameSession("visual", isMember);
+  const { stageRef, fx } = useArena(GAME_THEMES.visual.tint);
   const [phase, setPhase] = useState<Phase>("intro");
   const [level, setLevel] = useState(1);
   const [lives, setLives] = useState(VISUAL_LIVES);
@@ -24,7 +26,7 @@ export function VisualGame({ isMember }: { isMember: boolean }) {
     if (timer.current) clearTimeout(timer.current);
   }, []);
 
-  const round = useCallback((lvl: number) => {
+  const round = useCallback((lvl: number, delay = 450) => {
     setPattern(visualPattern(lvl));
     setFound(new Set());
     setMisses(new Set());
@@ -32,26 +34,30 @@ export function VisualGame({ isMember }: { isMember: boolean }) {
     timer.current = setTimeout(() => {
       setPhase("show");
       timer.current = setTimeout(() => setPhase("input"), 1100);
-    }, 450);
+    }, delay);
   }, []);
 
   const start = useCallback(async () => {
     setOutcome(null);
     setLevel(1);
     setLives(VISUAL_LIVES);
+    fx.start();
     await begin();
     round(1);
-  }, [begin, round]);
+  }, [begin, fx, round]);
 
   const press = async (cell: number) => {
     if (phase !== "input" || found.has(cell) || misses.has(cell)) return;
     if (pattern.has(cell)) {
       const f = new Set(found).add(cell);
       setFound(f);
+      fx.tile(f.size - 1);
       if (f.size === pattern.size) {
         const next = level + 1;
+        setPhase("between");
+        setTimeout(() => fx.level(), 120);
         setLevel(next);
-        round(next);
+        round(next, 700);
       }
       return;
     }
@@ -60,25 +66,31 @@ export function VisualGame({ isMember }: { isMember: boolean }) {
     if (m.size >= VISUAL_MISSES_PER_ROUND) {
       const l = lives - 1;
       setLives(l);
+      fx.life();
       if (l <= 0) {
+        setPhase("between");
+        const o = await finish({ level: level - 1 });
+        setOutcome(o);
         setPhase("result");
-        setOutcome(await finish({ level: level - 1 }));
+        fx.end(o);
       } else {
-        round(level);
+        round(level, 900);
       }
+    } else {
+      fx.miss();
     }
   };
 
   if (phase === "intro") {
     return (
-      <Stage className="items-start sm:px-14">
+      <Stage kind="visual" ref={stageRef}>
         <GameIntro kind="visual" onStart={start} />
       </Stage>
     );
   }
   if (phase === "result" && outcome) {
     return (
-      <Stage className="items-start sm:px-14">
+      <Stage kind="visual" ref={stageRef}>
         <ResultPanel kind="visual" outcome={outcome} onAgain={start} isMember={isMember} />
       </Stage>
     );
@@ -86,17 +98,28 @@ export function VisualGame({ isMember }: { isMember: boolean }) {
 
   const size = visualGridSize(level);
   return (
-    <Stage tone="deep">
-      <Readout items={[{ label: "Level", value: level }, { label: "Lives", value: <Lives left={lives} total={VISUAL_LIVES} /> }]} />
+    <Stage kind="visual" ref={stageRef}>
+      <Hud
+        level={level}
+        lives={{ left: lives, total: VISUAL_LIVES }}
+        items={[{ label: "Misses", value: `${misses.size}/${VISUAL_MISSES_PER_ROUND}` }]}
+      />
       <p className="sr-only" aria-live="polite">
         {phase === "show" ? "Memorise the lit squares." : phase === "input" ? "Select the squares that were lit." : ""}
       </p>
       <div
-        className="mt-8 grid w-full max-w-[min(30rem,82vw)] gap-1.5 sm:gap-2"
+        className="mt-4 grid w-full max-w-[min(28rem,84vw)] gap-2 sm:gap-2.5"
         style={{ gridTemplateColumns: `repeat(${size}, minmax(0, 1fr))` }}
       >
         {Array.from({ length: size * size }).map((_, cell) => {
-          const lit = (phase === "show" && pattern.has(cell)) || found.has(cell);
+          const state =
+            (phase === "show" && pattern.has(cell)) || found.has(cell)
+              ? "lit"
+              : misses.has(cell)
+                ? "wrong"
+                : phase === "input"
+                  ? "idle"
+                  : "off";
           return (
             <button
               key={`${level}-${cell}`}
@@ -114,10 +137,7 @@ export function VisualGame({ isMember }: { isMember: boolean }) {
                   void press(cell);
                 }
               }}
-              className={cn(
-                "aspect-square w-full transition-colors duration-200 disabled:cursor-default",
-                lit ? "bg-gold" : misses.has(cell) ? "bg-danger-wash" : "bg-panel-2 hover:bg-panel-3",
-              )}
+              className={`aspect-square w-full ${tileClass(state)}`}
             />
           );
         })}

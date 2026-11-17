@@ -8,7 +8,10 @@ import { GamePlayer } from "@/components/arena/game-player";
 import { HistoryChart } from "@/components/charts/history-chart";
 import { DistributionChart } from "@/components/charts/distribution-chart";
 import { Avatar } from "@/components/ui/avatar";
-import { TierMark } from "@/components/ui/tier-mark";
+import { Sigil } from "@/components/ui/sigils";
+import { Crumbs } from "@/components/hub/hub-page";
+import { tierColor } from "@/components/hub/sidebar";
+import { GAME_THEMES } from "@/lib/games/themes";
 import { ordinal } from "@/lib/utils";
 
 export async function generateStaticParams() {
@@ -55,95 +58,88 @@ export default async function GamePage({ params }: PageProps<"/arena/[game]">) {
   }
   const isDaily = dailyGame() === g.kind;
 
-  return (
-    <div className="mx-auto w-full max-w-[96rem] px-[var(--gutter)] pb-10 pt-10 sm:pt-14">
-      <nav aria-label="Breadcrumb" className="text-small text-muted">
-        <Link href="/arena" className="hover:text-ink">
-          The Arena
-        </Link>
-        {isDaily && <span className="ml-3 text-gold-bright">Today’s challenge</span>}
-      </nav>
-      <h1 className="mt-3 font-display text-display-l text-ink">{g.name}</h1>
-      <p className="mt-3 max-w-[60ch] text-ink-2">{g.measures}</p>
+  const theme = GAME_THEMES[g.kind];
 
-      <div className="mt-10">
-        <GamePlayer kind={g.kind} isMember={isMember} />
+  return (
+    <div className="mx-auto flex w-full max-w-[92rem] flex-col gap-6 px-[var(--gutter)] pb-14 pt-5">
+      <Crumbs items={[{ href: "/", label: "Upper Echelon" }, { href: "/arena", label: "Arena" }, { label: g.name }]} />
+      <div className="flex flex-wrap items-center gap-3">
+        <span className="inline-flex size-11 items-center justify-center rounded-xl" style={{ background: `${theme.tint}22`, color: theme.tint }}>
+          <Sigil name={theme.sigil} size={24} />
+        </span>
+        <h1 className="font-display text-[clamp(1.9rem,3.2vw,2.6rem)] leading-none text-ink">{g.name}</h1>
+        {isDaily && <span className="chip bg-gold text-ground">Today&rsquo;s rite</span>}
+        <p className="w-full max-w-[70ch] text-ink-2">{g.measures}</p>
       </div>
 
-      <div className="mt-20 grid gap-16 lg:grid-cols-[1.4fr_1fr]">
-        <section aria-labelledby="record">
-          <h2 id="record" className="font-display text-display-s text-ink">
+      <GamePlayer kind={g.kind} isMember={isMember} />
+
+      <div className="grid gap-5 lg:grid-cols-[1.4fr_1fr]">
+        <section aria-labelledby="record" className="panel">
+          <h2 id="record" className="panel-head">
             {viewer ? "Your record" : "Where members stand"}
           </h2>
-          {viewer && best ? (
-            <>
-              <dl className="mt-6 grid grid-cols-2 gap-6 sm:grid-cols-4">
-                <div>
-                  <dt className="text-small text-muted">Personal best</dt>
-                  <dd className="figure mt-1 text-2xl text-ink">
-                    {Number(best.best_score).toFixed(g.decimals)} <span className="text-base text-muted">{g.unit}</span>
-                  </dd>
+          <div className="p-5">
+            {viewer && best ? (
+              <>
+                <dl className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                  {[
+                    ["Personal best", <>{Number(best.best_score).toFixed(g.decimals)} <span className="text-base text-muted">{g.unit}</span></>],
+                    ["Percentile", bestPct == null ? "—" : ordinal(bestPct)],
+                    ["Rating", best.best_rating],
+                    ["Trials", best.plays],
+                  ].map(([label, value]) => (
+                    <div key={String(label)} className="rounded-xl bg-panel px-4 py-3">
+                      <dt className="text-micro text-muted">{label}</dt>
+                      <dd className="figure mt-1 text-2xl text-ink">{value}</dd>
+                    </div>
+                  ))}
+                </dl>
+                <div className="mt-6">
+                  <HistoryChart points={history} lowerIsBetter={g.lowerIsBetter} unit={g.unit} />
                 </div>
-                <div>
-                  <dt className="text-small text-muted">Percentile</dt>
-                  <dd className="figure mt-1 text-2xl text-ink">{bestPct == null ? "—" : ordinal(bestPct)}</dd>
-                </div>
-                <div>
-                  <dt className="text-small text-muted">Rating</dt>
-                  <dd className="figure mt-1 text-2xl text-ink">{best.best_rating}</dd>
-                </div>
-                <div>
-                  <dt className="text-small text-muted">Trials</dt>
-                  <dd className="figure mt-1 text-2xl text-ink">{best.plays}</dd>
-                </div>
-              </dl>
-              <div className="mt-10">
-                <HistoryChart points={history} lowerIsBetter={g.lowerIsBetter} unit={g.unit} />
-              </div>
-            </>
-          ) : (
-            <p className="mt-4 max-w-[52ch] text-muted">
-              {viewer ? "Finish a trial and your record begins here." : "Members see their history and percentile here."}
-            </p>
-          )}
-          <div className="mt-12">
-            <DistributionChart
-              buckets={(dist ?? []).map((d) => ({ bucket: d.bucket, members: Number(d.members) }))}
-              lo={g.distribution.lo}
-              hi={g.distribution.hi}
-              mark={best ? Number(best.best_score) : null}
-              unit={g.unit}
-            />
+              </>
+            ) : (
+              <p className="max-w-[52ch] text-muted">
+                {viewer ? "Finish a trial and your record begins here." : "Members see their history and percentile here."}
+              </p>
+            )}
+            <div className="mt-6">
+              <DistributionChart
+                buckets={(dist ?? []).map((d) => ({ bucket: d.bucket, members: Number(d.members) }))}
+                lo={g.distribution.lo}
+                hi={g.distribution.hi}
+                mark={best ? Number(best.best_score) : null}
+                unit={g.unit}
+              />
+            </div>
           </div>
         </section>
 
-        <section aria-labelledby="board">
-          <div className="flex items-baseline justify-between">
-            <h2 id="board" className="font-display text-display-s text-ink">
-              The board
-            </h2>
-            <Link href={`/leaderboards?game=${g.kind}`} className="text-small text-ink-2 underline hover:text-ink">
-              Full leaderboard
+        <section aria-labelledby="board" className="panel">
+          <h2 id="board" className="panel-head">
+            The board
+            <Link href={`/leaderboards?game=${g.kind}`} className="font-sans text-small text-gold hover:text-gold-bright">
+              Full leaderboard →
             </Link>
-          </div>
+          </h2>
           {top && top.length > 0 ? (
-            <ol className="mt-6 flex flex-col">
+            <ol className="rows">
               {top.map((row) => (
-                <li key={row.user_id} className="flex items-center gap-4 py-3">
-                  <span className="figure w-6 text-muted">{row.rank}</span>
+                <li key={row.user_id} className="flex items-center gap-3 px-4 py-3">
+                  <span className={`figure w-6 text-right ${row.rank <= 3 ? "text-gold" : "text-muted"}`}>{row.rank}</span>
                   <Avatar src={row.avatar_url} name={row.display_name} size={32} />
-                  <Link href={`/u/${row.username}`} className="min-w-0 flex-1 truncate text-ink hover:text-gold-bright">
+                  <Link href={`/u/${row.username}`} className="min-w-0 flex-1 truncate hover:underline" style={{ color: tierColor(row.tier) }}>
                     {row.display_name}
                   </Link>
-                  <TierMark tier={row.tier} />
                   <span className="figure text-ink">
-                    {Number(row.score).toFixed(GAMES[g.kind].decimals)} {g.unit}
+                    {Number(row.score).toFixed(GAMES[g.kind].decimals)} <span className="text-muted">{g.unit}</span>
                   </span>
                 </li>
               ))}
             </ol>
           ) : (
-            <p className="mt-6 text-muted">The board is empty. The first name on it could be yours.</p>
+            <p className="px-5 py-6 text-muted">The board is empty. The first name on it could be yours.</p>
           )}
         </section>
       </div>

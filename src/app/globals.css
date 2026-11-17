@@ -226,6 +226,14 @@
 }
 :root[data-motion="reduced"] .js [data-reveal], :root[data-motion="reduced"] [data-reveal] { opacity: 1; transform: none; }
 
+/* Arena motion: a counter that pops when it changes, a floating sigil, candle flicker and snuff. */
+@keyframes pop { 0% { transform: scale(1.6); opacity: 0.3; } 100% { transform: scale(1); opacity: 1; } }
+@keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+@keyframes flicker { 0%, 100% { transform: scaleY(1) rotate(0deg); } 40% { transform: scaleY(1.06) rotate(-2deg); } 70% { transform: scaleY(0.96) rotate(1.5deg); } }
+@keyframes snuff { 0% { transform: scale(1.25); opacity: 0.2; filter: blur(2px); } 100% { transform: scale(1); opacity: 1; filter: none; } }
+@keyframes rise-in { from { transform: translateY(18px) scale(0.98); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes count-up { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+
 /* Skeletons pulse slowly in tone, never shimmer. */
 .skeleton {
   background: var(--color-panel);

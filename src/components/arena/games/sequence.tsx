@@ -2,8 +2,9 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { SEQUENCE_FLASH_MS, SEQUENCE_GAP_MS, checkSequenceInput, extendSequence } from "@/lib/games/engine";
-import { cn } from "@/lib/utils";
-import { GameIntro, Readout, Stage } from "../game-ui";
+import { GAME_THEMES } from "@/lib/games/themes";
+import { useArena } from "../fx";
+import { GameIntro, Hud, Stage, tileClass } from "../game-ui";
 import { ResultPanel } from "../result-panel";
 import { type GameOutcome, useGameSession } from "../use-game-session";
 
@@ -12,6 +13,7 @@ const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 export function SequenceGame({ isMember }: { isMember: boolean }) {
   const { begin, finish } = useGameSession("sequence", isMember);
+  const { stageRef, fx } = useArena(GAME_THEMES.sequence.tint);
   const [phase, setPhase] = useState<Phase>("intro");
   const [seq, setSeq] = useState<number[]>([]);
   const [inputs, setInputs] = useState<number[]>([]);
@@ -28,28 +30,33 @@ export function SequenceGame({ isMember }: { isMember: boolean }) {
     };
   }, []);
 
-  const play = useCallback(async (s: number[]) => {
-    setPhase("showing");
-    setInputs([]);
-    await sleep(600);
-    for (const tile of s) {
-      if (!alive.current) return;
-      setLit(tile);
-      await sleep(SEQUENCE_FLASH_MS);
-      setLit(null);
-      await sleep(SEQUENCE_GAP_MS);
-    }
-    if (alive.current) setPhase("input");
-  }, []);
+  const play = useCallback(
+    async (s: number[]) => {
+      setPhase("showing");
+      setInputs([]);
+      await sleep(650);
+      for (const tile of s) {
+        if (!alive.current) return;
+        setLit(tile);
+        fx.tile(tile);
+        await sleep(SEQUENCE_FLASH_MS);
+        setLit(null);
+        await sleep(SEQUENCE_GAP_MS);
+      }
+      if (alive.current) setPhase("input");
+    },
+    [fx],
+  );
 
   const start = useCallback(async () => {
     setOutcome(null);
     setWrong(null);
+    fx.start();
     await begin();
     const s = extendSequence([]);
     setSeq(s);
     void play(s);
-  }, [begin, play]);
+  }, [begin, fx, play]);
 
   const press = useCallback(
     async (tile: number) => {
@@ -61,17 +68,27 @@ export function SequenceGame({ isMember }: { isMember: boolean }) {
       const verdict = checkSequenceInput(seq, next);
       if (verdict === "wrong") {
         setWrong(tile);
-        setPhase("result");
-        setOutcome(await finish({ level: seq.length - 1 }));
-      } else if (verdict === "complete") {
+        fx.life();
         setPhase("between");
+        await sleep(700);
+        const o = await finish({ level: seq.length - 1 });
+        setOutcome(o);
+        setPhase("result");
+        fx.end(o);
+      } else if (verdict === "complete") {
+        fx.tile(tile);
+        setPhase("between");
+        await sleep(260);
+        fx.level();
         await sleep(450);
         const s = extendSequence(seq);
         setSeq(s);
         void play(s);
+      } else {
+        fx.tile(tile);
       }
     },
-    [finish, inputs, phase, play, seq],
+    [finish, fx, inputs, phase, play, seq],
   );
 
   useEffect(() => {
@@ -86,31 +103,26 @@ export function SequenceGame({ isMember }: { isMember: boolean }) {
 
   if (phase === "intro") {
     return (
-      <Stage className="items-start sm:px-14">
+      <Stage kind="sequence" ref={stageRef}>
         <GameIntro kind="sequence" onStart={start} />
       </Stage>
     );
   }
   if (phase === "result" && outcome) {
     return (
-      <Stage className="items-start sm:px-14">
+      <Stage kind="sequence" ref={stageRef}>
         <ResultPanel kind="sequence" outcome={outcome} onAgain={start} isMember={isMember} />
       </Stage>
     );
   }
 
   return (
-    <Stage tone="deep">
-      <Readout
-        items={[
-          { label: "Length", value: seq.length },
-          { label: "Status", value: phase === "showing" ? "Watch" : phase === "input" ? `${inputs.length} / ${seq.length}` : "Good" },
-        ]}
-      />
-      <p className="sr-only" aria-live="polite">
-        {phase === "showing" ? "Watch the sequence." : phase === "input" ? "Your turn. Repeat the sequence." : ""}
+    <Stage kind="sequence" ref={stageRef}>
+      <Hud level={seq.length} items={[{ label: "Progress", value: phase === "input" ? `${inputs.length}/${seq.length}` : "·" }]} />
+      <p className="absolute inset-x-0 top-24 text-center text-small text-white/60" aria-live="polite">
+        {phase === "showing" ? "Watch." : phase === "input" ? "Your turn." : ""}
       </p>
-      <div className="mt-8 grid w-full max-w-[min(26rem,80vw)] grid-cols-3 gap-2.5 sm:gap-3">
+      <div className="mt-6 grid w-full max-w-[min(24rem,78vw)] grid-cols-3 gap-3 sm:gap-3.5">
         {Array.from({ length: 9 }).map((_, i) => (
           <button
             key={i}
@@ -127,10 +139,7 @@ export function SequenceGame({ isMember }: { isMember: boolean }) {
                 void press(i);
               }
             }}
-            className={cn(
-              "aspect-square w-full transition-colors duration-[140ms] disabled:cursor-default",
-              lit === i ? "bg-gold" : pressed === i ? "bg-ink-2" : wrong === i ? "bg-danger" : "bg-panel-2 hover:bg-panel-3",
-            )}
+            className={`aspect-square w-full ${tileClass(wrong === i ? "wrong" : lit === i || pressed === i ? "lit" : phase === "input" ? "idle" : "off")}`}
           />
         ))}
       </div>

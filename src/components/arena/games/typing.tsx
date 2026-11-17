@@ -3,9 +3,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { PASSAGES } from "@/lib/games/passages";
 import { typingCorrect, typingStats } from "@/lib/games/engine";
-import { Button } from "@/components/ui/button";
+import { GAME_THEMES } from "@/lib/games/themes";
 import { cn } from "@/lib/utils";
-import { GameIntro, Readout, Stage } from "../game-ui";
+import { useArena } from "../fx";
+import { GameIntro, Hud, Stage } from "../game-ui";
 import { ResultPanel } from "../result-panel";
 import { type GameOutcome, useGameSession } from "../use-game-session";
 
@@ -13,6 +14,7 @@ type Phase = "intro" | "typing" | "result";
 
 export function TypingGame({ isMember }: { isMember: boolean }) {
   const { begin, finish } = useGameSession("typing", isMember);
+  const { stageRef, fx } = useArena(GAME_THEMES.typing.tint);
   const [phase, setPhase] = useState<Phase>("intro");
   const [passageIndex, setPassageIndex] = useState(0);
   const [typed, setTyped] = useState("");
@@ -29,9 +31,10 @@ export function TypingGame({ isMember }: { isMember: boolean }) {
     setStartedAt(null);
     setKeystrokes(0);
     setOutcome(null);
+    fx.start();
     await begin();
     setPhase("typing");
-  }, [begin]);
+  }, [begin, fx]);
 
   useEffect(() => {
     if (phase === "typing") inputRef.current?.focus();
@@ -49,17 +52,17 @@ export function TypingGame({ isMember }: { isMember: boolean }) {
       // Accuracy counts every character typed, including ones later corrected.
       const correct = typingCorrect(passage.text, text);
       const typedCount = Math.max(text.length, strokes);
+      const o = await finish({
+        passageId: passage.id,
+        typed: Math.min(typedCount, passage.text.length + 20),
+        correct: Math.min(correct, typedCount),
+        durationMs,
+      });
+      setOutcome(o);
       setPhase("result");
-      setOutcome(
-        await finish({
-          passageId: passage.id,
-          typed: Math.min(typedCount, passage.text.length + 20),
-          correct: Math.min(correct, typedCount),
-          durationMs,
-        }),
-      );
+      fx.end(o);
     },
-    [finish, passage],
+    [finish, fx, passage],
   );
 
   const onChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -70,6 +73,8 @@ export function TypingGame({ isMember }: { isMember: boolean }) {
       setStartedAt(t0);
     }
     const added = Math.max(0, value.length - typed.length);
+    // A soft thud when a new character is wrong; silence while it is right.
+    if (added > 0 && value[value.length - 1] !== passage.text[value.length - 1]) fx.tap();
     const strokes = keystrokes + added;
     setKeystrokes(strokes);
     setTyped(value);
@@ -84,7 +89,7 @@ export function TypingGame({ isMember }: { isMember: boolean }) {
 
   if (phase === "intro") {
     return (
-      <Stage className="items-start sm:px-14">
+      <Stage kind="typing" ref={stageRef}>
         <GameIntro kind="typing" onStart={start} />
       </Stage>
     );
@@ -92,7 +97,7 @@ export function TypingGame({ isMember }: { isMember: boolean }) {
   if (phase === "result" && outcome) {
     const acc = outcome.details.accuracy as number | undefined;
     return (
-      <Stage className="items-start sm:px-14">
+      <Stage kind="typing" ref={stageRef}>
         <ResultPanel
           kind="typing"
           outcome={outcome}
@@ -100,7 +105,7 @@ export function TypingGame({ isMember }: { isMember: boolean }) {
           isMember={isMember}
           extra={
             acc != null && (
-              <p className="text-small text-muted">
+              <p className="text-small text-white/60">
                 Gross {String(outcome.details.grossWpm)} wpm · accuracy {Math.round(acc * 100)}%
               </p>
             )
@@ -111,24 +116,19 @@ export function TypingGame({ isMember }: { isMember: boolean }) {
   }
 
   return (
-    <Stage tone="deep" className="items-stretch sm:px-14" onClick={() => inputRef.current?.focus()}>
-      <Readout
-        items={[
-          { label: "Net wpm", value: live.wpm },
-          { label: "Accuracy", value: `${live.acc}%` },
-        ]}
-      />
-      <p className="mx-auto mt-10 max-w-3xl font-display text-[clamp(1.4rem,2.6vw,2rem)] leading-[1.55]" aria-hidden>
+    <Stage kind="typing" ref={stageRef} className="items-stretch" onClick={() => inputRef.current?.focus()}>
+      <Hud level={live.wpm} levelLabel="Net wpm" items={[{ label: "Accuracy", value: `${live.acc}%` }]} />
+      <p className="mx-auto mt-4 max-w-3xl font-display text-[clamp(1.4rem,2.6vw,2rem)] leading-[1.55]" aria-hidden>
         {passage.text.split("").map((ch, i) => {
           const state = i < typed.length ? (typed[i] === ch ? "ok" : "bad") : i === typed.length ? "caret" : "todo";
           return (
             <span
               key={i}
               className={cn(
-                state === "ok" && "text-ink",
-                state === "bad" && "bg-danger-wash text-danger underline",
-                state === "todo" && "text-faint",
-                state === "caret" && "bg-gold text-ground",
+                state === "ok" && "text-white",
+                state === "bad" && "rounded-sm bg-[#c8573f]/30 text-[#ffb7a3] underline",
+                state === "todo" && "text-white/35",
+                state === "caret" && "rounded-sm bg-[var(--tint)] text-[var(--stage)] motion-safe:animate-pulse",
               )}
             >
               {ch}
@@ -153,9 +153,13 @@ export function TypingGame({ isMember }: { isMember: boolean }) {
         className="absolute h-px w-px opacity-0"
       />
       <div className="mx-auto mt-10 flex gap-3">
-        <Button variant="secondary" size="sm" onClick={start}>
+        <button
+          type="button"
+          onClick={start}
+          className="inline-flex h-10 items-center rounded-xl bg-white/10 px-4 text-small font-medium text-white hover:bg-white/15"
+        >
           New passage
-        </Button>
+        </button>
       </div>
     </Stage>
   );

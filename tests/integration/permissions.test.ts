@@ -231,4 +231,42 @@ describe.skipIf(!enabled)("row-level security and database rules", () => {
     expect(error).toBeNull();
     expect(Number(data)).toBeGreaterThan(0);
   });
+
+  it("lets members speak in the Circle as themselves only, and visitors only listen", async () => {
+    const said = await a.client.from("shouts").insert({ body: "  hello   circle  " }).select("id, author_id, body").single();
+    expect(said.error).toBeNull();
+    expect(said.data?.author_id).toBe(a.id);
+    expect(said.data?.body).toBe("hello circle");
+    const spoof = await b.client.from("shouts").insert({ body: "pretend", author_id: a.id } as never);
+    expect(spoof.error).not.toBeNull();
+    const visitor = await anon.from("shouts").insert({ body: "hi" });
+    expect(visitor.error).not.toBeNull();
+    const { data: heard } = await anon.from("shouts").select("id").eq("id", said.data!.id);
+    expect(heard).toHaveLength(1);
+    const reported = await b.client.from("reports").insert({ target_type: "shout", target_id: String(said.data!.id), reason: "spam" });
+    expect(reported.error).toBeNull();
+    const removed = await b.client.rpc("mod_set_removed", { p_type: "shout", p_id: String(said.data!.id), p_removed: true });
+    expect(removed.error).not.toBeNull();
+    const byMod = await mod.client.rpc("mod_set_removed", { p_type: "shout", p_id: String(said.data!.id), p_removed: true });
+    expect(byMod.error).toBeNull();
+    const { data: gone } = await anon.from("shouts").select("id").eq("id", said.data!.id);
+    expect(gone).toHaveLength(0);
+  });
+
+  it("keeps presence private and lists the board with locked rooms sealed", async () => {
+    const direct = await anon.from("presence" as never).select("*");
+    expect(direct.error).not.toBeNull();
+    const write = await a.client.rpc("record_presence" as never, { p_key: "u:x" } as never);
+    expect(write.error).not.toBeNull();
+    const { data: online, error } = await anon.rpc("online_now", { lim: 5 });
+    expect(error).toBeNull();
+    expect(online).toHaveProperty("members");
+    const { data: rooms } = await anon.rpc("forum_index");
+    const sanctum = (rooms ?? []).find((r) => r.slug === "inner-room");
+    expect(sanctum?.can_view).toBe(false);
+    expect(sanctum?.threads).toBeNull();
+    expect(sanctum?.last_thread_id).toBeNull();
+    const { data: me } = await a.client.from("profiles").select("message_count").eq("id", a.id).single();
+    expect(me!.message_count).toBeGreaterThan(0);
+  });
 });
