@@ -14,6 +14,9 @@ import { displayNameSchema, dobSchema, emailSchema, passwordSchema, usernameSche
 import { InterestPicker } from "./interest-picker";
 import { PasswordInput } from "./password-input";
 
+/** Mirrors Supabase's "Confirm email" setting; set to "false" where it is switched off. */
+const CONFIRMS_EMAIL = process.env.NEXT_PUBLIC_EMAIL_CONFIRMATION !== "false";
+
 const STEPS = [
   { key: "name", label: "Name", plane: "sagittal" },
   { key: "interests", label: "Interests", plane: "coronal" },
@@ -191,7 +194,11 @@ export function JoinSequence({ googleSlot }: { googleSlot?: React.ReactNode }) {
             <h1 id="step-seal" ref={step === 2 ? headingRef : undefined} tabIndex={-1} className="font-display text-display-l text-ink outline-none">
               Seal your place.
             </h1>
-            <p className="mt-4 text-ink-2">We will send a letter to confirm the address. It never appears publicly.</p>
+            <p className="mt-4 text-ink-2">
+              {CONFIRMS_EMAIL
+                ? "We will send a letter to confirm the address. It never appears publicly."
+                : "You sign in with it. It never appears publicly."}
+            </p>
             <div className="mt-10 flex flex-col gap-6">
               <Field label="Email" htmlFor="email" error={errors.email}>
                 <Input id="email" name="email" type="email" autoComplete="email" required aria-invalid={!!errors.email} />
@@ -233,7 +240,7 @@ export function JoinSequence({ googleSlot }: { googleSlot?: React.ReactNode }) {
               {step === 2 && <Turnstile action="signup" />}
               {state && !state.ok && <Notice tone={state.kind === "rate_limited" ? "warning" : "error"}>{state.message}</Notice>}
               <div className="flex flex-wrap items-center gap-4">
-                <SubmitButton pendingLabel="Sealing…">Seal and send the letter</SubmitButton>
+                <SubmitButton pendingLabel="Sealing…">{CONFIRMS_EMAIL ? "Seal and send the letter" : "Seal your place"}</SubmitButton>
                 <button type="button" onClick={() => setStep(1)} className="text-ink-2 underline hover:text-ink">
                   Back
                 </button>

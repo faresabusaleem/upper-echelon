@@ -70,6 +70,15 @@ Import the GitHub repository (every push to `main` deploys). Environment variabl
 | `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `EMAIL_FROM` | the same SMTP account, for notification emails |
 | `CONTACT_EMAIL` | shown on the contact and privacy pages |
 | `NEXT_PUBLIC_GOOGLE_AUTH_ENABLED` | `true` once Google is configured |
+| `NEXT_PUBLIC_EMAIL_CONFIRMATION` | `false` while *Confirm email* is off in Supabase (no SMTP yet); `true` once it is on |
+
+The Supabase **Vercel integration** (Supabase → Project Settings → Integrations → Vercel) can sync
+`SUPABASE_SECRET_KEY` and the other Supabase variables into the Vercel project for you, so the secret
+never has to be copied by hand. The app also accepts the older name `SUPABASE_SERVICE_ROLE_KEY`.
+
+**Without SMTP**: switch *Confirm email* off in Supabase and set `NEXT_PUBLIC_EMAIL_CONFIRMATION=false`.
+New members can then join at once; magic links and password resets still reach only your own team until
+an SMTP provider is configured. Turn both back on once SMTP works.
 
 Enable **Web Analytics** and **Speed Insights** in the Vercel project (both free on Hobby).
 

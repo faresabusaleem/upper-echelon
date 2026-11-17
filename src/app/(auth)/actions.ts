@@ -75,7 +75,7 @@ export async function signUpAction(_: FormState, formData: FormData): Promise<Fo
   if (!available.available) return fail("conflict", available.message ?? "That name is taken.", { username: available.message ?? "" });
 
   const supabase = await createClient();
-  const { error } = await supabase.auth.signUp({
+  const { data: signedUp, error } = await supabase.auth.signUp({
     email: parsed.data.email,
     password: parsed.data.password,
     options: {
@@ -94,7 +94,10 @@ export async function signUpAction(_: FormState, formData: FormData): Promise<Fo
     if (error.status === 429) return fail("rate_limited", "Too many attempts. Please wait a few minutes.");
     return fail("unknown", "We could not complete the sign-up. Please try again.");
   }
-  // Supabase deliberately does not reveal whether the address was already registered.
+  // With email confirmation switched off in Supabase, the member is signed in at once.
+  if (signedUp.session) redirect("/initiation");
+  // Otherwise a confirmation letter is on its way. Supabase deliberately does not reveal whether the
+  // address was already registered.
   redirect("/join/sent");
 }
 
